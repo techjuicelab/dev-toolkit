@@ -9,6 +9,7 @@
 - **ASDF 버전 매니저** 자동 업데이트
 - **Homebrew** 전체 업데이트
 - **Docker** 완전 초기화
+- **DevContainer** 환경 설정 자동화
 
 모든 스크립트는 실시간 진행률 표시, 컬러풀한 UI, 그리고 상세한 로깅 기능을 제공합니다.
 
@@ -16,12 +17,19 @@
 
 ```
 ~/.zsh.d/
-├── asdf_update.sh      # ASDF 플러그인 및 도구 업데이트
-├── brew_update.sh      # Homebrew 전체 업데이트
-├── docker_reset.sh     # Docker 완전 초기화
-├── logs/              # 실행 로그 저장 디렉토리
-├── .gitignore         # Git 제외 파일 설정
-└── README.md          # 이 파일
+├── asdf_update.sh         # ASDF 플러그인 및 도구 업데이트
+├── brew_update.sh         # Homebrew 전체 업데이트
+├── docker_reset.sh        # Docker 완전 초기화
+├── devcontainer_setup.sh  # DevContainer 환경 설정 자동화
+├── .templates/            # DevContainer 템플릿 파일들 (숨김 폴더)
+│   └── devcontainer/
+│       ├── devcontainer.json
+│       ├── Dockerfile
+│       └── init-firewall.sh
+├── logs/                  # 실행 로그 저장 디렉토리
+├── .gitignore            # Git 제외 파일 설정
+├── CLAUDE.md             # Claude Code AI 어시스턴트 연동 가이드
+└── README.md             # 이 파일
 ```
 
 ## ⚙️ 설치 및 설정
@@ -63,7 +71,7 @@ EOF
 source ~/.zshrc
 
 # 함수가 제대로 로드되었는지 확인
-type asdf:update brew:update docker:reset
+type asdf:update brew:update docker:reset devcontainer:setup
 ```
 
 ### 5. 설정 확인 (선택사항)
@@ -135,6 +143,43 @@ docker:reset -v
 - 빌드 캐시 정리
 - 시스템 정리 및 최적화
 
+### DevContainer 환경 설정 (`devcontainer:setup`)
+현재 디렉토리에 완전한 DevContainer 환경을 자동으로 설정합니다.
+
+```bash
+# DevContainer 환경 설정
+devcontainer:setup
+
+# 버전 확인
+devcontainer:setup --version
+# 또는
+devcontainer:setup -v
+```
+
+**기능:**
+- SuperClaude Framework (Claude Code 확장 시스템) 완전 통합
+- Oh My Zsh + Powerlevel10k 테마 자동 설정
+- 필수 플러그인: git, zsh-syntax-highlighting, zsh-autosuggestions, fzf
+- ccstatusline: Claude Code 상태 모니터링 시스템
+- 네트워크 보안 설정 (allowlist 기반 방화벽)
+- Node.js 20 + bun 패키지 매니저 환경
+- 개인화된 설정 자동 적용 (Claude, Powerlevel10k 등)
+
+**포함된 설정:**
+- `.devcontainer/devcontainer.json` - VS Code DevContainer 설정
+- `.devcontainer/Dockerfile` - 컨테이너 이미지 빌드 파일
+- `.devcontainer/init-firewall.sh` - 네트워크 보안 초기화
+- `.devcontainer/.claude/` - 완전한 SuperClaude 프레임워크
+- `.devcontainer/.p10k.zsh` - Powerlevel10k 개인화 설정
+- `.devcontainer/ccstatusline/` - Claude Code 상태 모니터링
+- `.devcontainer/docker-zshrc` - 컨테이너용 zsh 설정
+- `.devcontainer/README.md` - DevContainer 환경 가이드
+
+**사용 방법:**
+1. 프로젝트 루트 디렉토리에서 `devcontainer:setup` 실행
+2. VS Code에서 "Dev Containers: Reopen in Container" 선택
+3. 컨테이너가 빌드되고 모든 설정이 자동으로 적용됨
+
 ## 📊 로그 시스템
 
 모든 스크립트는 실행 시 상세한 로그를 생성합니다:
@@ -143,7 +188,8 @@ docker:reset -v
 ~/.zsh.d/logs/
 ├── asdf_update_20240819_143022.log
 ├── brew_update_20240819_143155.log
-└── docker_reset_20240819_143300.log
+├── docker_reset_20240819_143300.log
+└── devcontainer_setup_20240915_125945.log
 ```
 
 로그 파일에는 다음 정보가 포함됩니다:
@@ -163,22 +209,30 @@ docker:reset -v
 
 - **macOS**: macOS 환경에서 동작
 - **Zsh**: Zsh 셸 환경
+- **Git**: 버전 관리 시스템
 - **ASDF**: 버전 매니저 (asdf:update 사용시)
 - **Homebrew**: 패키지 매니저 (brew:update 사용시)
 - **Docker**: 컨테이너 플랫폼 (docker:reset 사용시)
+- **VS Code + Dev Containers 확장**: DevContainer 환경 사용시
 
 ## 🛡️ 주의사항
 
 - `docker:reset`은 모든 Docker 데이터를 삭제하므로 신중하게 사용하세요
+- `devcontainer:setup`은 현재 디렉토리에 .devcontainer 폴더를 생성하므로 프로젝트 루트에서 실행하세요
 - 업데이트 작업은 인터넷 연결이 필요합니다
 - 로그 파일은 자동으로 누적되므로 주기적으로 정리해주세요
+- DevContainer 환경은 VS Code와 Docker가 모두 설치되어 있어야 정상 작동합니다
 
 ## 📝 버전 정보
 
-현재 모든 스크립트는 **v1.2.0**입니다.
+**현재 스크립트 버전:**
+- `asdf:update` - v1.2.0
+- `brew:update` - v1.2.0
+- `devcontainer:setup` - v1.2.0
+- `docker:reset` - v1.3.1
 
 ---
 
 **개발환경**: macOS + Zsh + Oh My Zsh + Powerlevel10k  
 **작성자**: TechJuiceLab  
-**최종 업데이트**: 2024-08-19
+**최종 업데이트**: 2024-09-15

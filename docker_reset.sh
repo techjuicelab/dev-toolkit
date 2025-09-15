@@ -7,7 +7,7 @@
 # ──────────────────────────────────────────────────────────
 docker:reset() {
   # 스크립트 버전 정보
-  local VERSION="1.2.0"
+  local VERSION="1.3.1"
 
   # --version 또는 -v 플래그가 입력되면 버전 정보 출력 후 종료
   if [[ "$1" == "--version" || "$1" == "-v" ]]; then
@@ -169,25 +169,56 @@ docker:reset() {
     return ${PIPESTATUS[0]}
   }
   
-  # ─── 삭제 작업 ──────────────────
+  # ─── 강화된 삭제 작업 (재시도 + 에러 처리) ──────────────────
   delete_with_progress() {
-    local -a ids
+    local -a ids failed_ids
     local cmd=$2
     local act=$3
+    local max_retries=3
+    
     while IFS= read -r l; do [[ -n "$l" ]] && ids+=("$l"); done <<< "$1"
     if (( ${#ids[@]} == 0 )); then
       echo_success "  - $act 대상 없음"
       update_progress $current_main_step 100
       return
     fi
+    
     echo_info "▶️ $act (${#ids[@]})"
     local total=${#ids[@]}
+    
+    # 첫 번째 시도
     for ((i=1; i<=total; i++)); do
-      log_cmd "$cmd ${ids[i]}"
+      if ! log_cmd "$cmd ${ids[i]}"; then
+        failed_ids+=("${ids[i]}")
+        echo_warn "    - ${ids[i]} 삭제 실패, 재시도 예정"
+      fi
       update_progress $current_main_step $((100*i/total))
       sleep 0.05
     done
-    echo_success "  - $act 완료"
+    
+    # 실패한 항목 재시도
+    for ((retry=1; retry<=max_retries && ${#failed_ids[@]}>0; retry++)); do
+      if (( ${#failed_ids[@]} > 0 )); then
+        echo_info "    - 재시도 ${retry}/${max_retries} (${#failed_ids[@]}개)"
+        local temp_failed=()
+        for failed_id in "${failed_ids[@]}"; do
+          sleep 0.5  # Docker daemon 안정화 대기
+          if ! log_cmd "$cmd $failed_id"; then
+            temp_failed+=("$failed_id")
+          else
+            echo_info "    - $failed_id 재시도 성공 ✅"
+          fi
+        done
+        failed_ids=("${temp_failed[@]}")
+      fi
+    done
+    
+    if (( ${#failed_ids[@]} > 0 )); then
+      echo_warn "  - $act 부분 완료 (${#failed_ids[@]}개 실패)"
+      echo_warn "    실패 목록: ${failed_ids[*]}"
+    else
+      echo_success "  - $act 완료"
+    fi
   }
 
   # ─── 메인 리셋 로직 ───────────────
@@ -198,15 +229,80 @@ docker:reset() {
     set_current_step 3; delete_with_progress "$(docker images -q)" "docker rmi -f" "이미지 삭제"
     set_current_step 4; delete_with_progress "$(docker volume ls -q)" "docker volume rm -f" "볼륨 삭제"
     set_current_step 5; delete_with_progress "$(docker network ls --filter type=custom -q)" "docker network rm" "네트워크 삭제"
-    set_current_step 6; echo_info "▶️ 캐시 정리"; log_cmd "docker system prune -af --volumes"; update_progress $current_main_step 100; echo_success "  - 캐시 삭제 완료"
-    set_current_step 7; echo_info "▶️ 검증 & 안전망 프루닝"
+    set_current_step 6; echo_info "▶️ 캐시 정리"
+    # 일반 시스템 캐시 정리
+    log_cmd "docker system prune -af --volumes"
+    update_progress $current_main_step 50
+    
+    # Docker Builder/Buildx 캐시 정리
+    echo_info "    - BuildKit 캐시 정리"
+    log_cmd "docker builder prune --all --force 2>/dev/null || true"
+    update_progress $current_main_step 70
+    
+    echo_info "    - Buildx 캐시 정리"
+    log_cmd "docker buildx prune --all --force 2>/dev/null || true"
+    update_progress $current_main_step 85
+    
+    echo_info "    - Docker Desktop 빌더 재설정"
+    log_cmd "docker buildx rm --all-inactive --force 2>/dev/null || true"
+    log_cmd "docker buildx create --use --bootstrap 2>/dev/null || true"
+    update_progress $current_main_step 100
+    echo_success "  - 전체 캐시 & 빌더 재설정 완료"
+    set_current_step 7; echo_info "▶️ 검증 & 강제 정리"
     local containers=$(docker ps -aq | wc -l)
     local images=$(docker images -q | wc -l) 
     local volumes=$(docker volume ls -q | wc -l)
-    log_cmd "echo 'Verification: containers=$containers, images=$images, volumes=$volumes'"
+    local networks=$(docker network ls --filter type=custom -q | wc -l)
+    
+    log_cmd "echo 'Initial verification: containers=$containers, images=$images, volumes=$volumes, networks=$networks'"
+    update_progress $current_main_step 30
+    
+    # 남은 리소스가 있으면 강제 정리 수행
+    if (( containers > 0 || images > 0 || volumes > 0 || networks > 0 )); then
+      echo_warn "  - 남은 리소스 감지, 강제 정리 수행"
+      
+      # 남은 컨테이너 강제 정리
+      if (( containers > 0 )); then
+        echo_info "    - 남은 컨테이너 강제 정리 ($containers개)"
+        log_cmd "docker rm -f \$(docker ps -aq) 2>/dev/null || true"
+      fi
+      update_progress $current_main_step 50
+      
+      # 남은 볼륨 강제 정리
+      if (( volumes > 0 )); then
+        echo_info "    - 남은 볼륨 강제 정리 ($volumes개)"
+        log_cmd "docker volume rm -f \$(docker volume ls -q) 2>/dev/null || true"
+      fi
+      update_progress $current_main_step 70
+      
+      # 남은 네트워크 강제 정리
+      if (( networks > 0 )); then
+        echo_info "    - 남은 네트워크 강제 정리 ($networks개)"
+        log_cmd "docker network rm \$(docker network ls --filter type=custom -q) 2>/dev/null || true"
+      fi
+      update_progress $current_main_step 85
+    fi
+    
+    # 시스템 전체 정리
     log_cmd "docker system prune -af --volumes"
+    update_progress $current_main_step 95
+    
+    # 최종 검증
+    local final_containers=$(docker ps -aq | wc -l)
+    local final_images=$(docker images -q | wc -l)
+    local final_volumes=$(docker volume ls -q | wc -l)
+    local final_networks=$(docker network ls --filter type=custom -q | wc -l)
+    
+    log_cmd "echo 'Final verification: containers=$final_containers, images=$final_images, volumes=$final_volumes, networks=$final_networks'"
     update_progress $current_main_step 100
-    echo_success "  - 검증 완료 (컨테이너:$containers, 이미지:$images, 볼륨:$volumes)"
+    
+    if (( final_containers == 0 && final_images == 0 && final_volumes == 0 && final_networks == 0 )); then
+      echo_success "  - 완전 정리 검증 ✅ (모든 리소스 삭제 완료)"
+      echo_info "  - Docker Desktop GUI 빌드 히스토리 완전 초기화를 위해서는"
+      echo_info "    Docker Desktop 재시작을 권장합니다."
+    else
+      echo_warn "  - 부분 정리 완료 ⚠️ (컨테이너:$final_containers, 이미지:$final_images, 볼륨:$final_volumes, 네트워크:$final_networks)"
+    fi
   }
 
   # ─── 사용자 확인 (개선된 버전) ─────
