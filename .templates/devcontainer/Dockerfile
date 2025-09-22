@@ -57,6 +57,22 @@ RUN ARCH=$(dpkg --print-architecture) && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
+# ---- Excel 작업용 Python venv 구성 ----
+# (openpyxl: xlsx 읽기/쓰기, XlsxWriter: xlsx 쓰기, xlrd<2: xls 읽기, pyxlsb: xlsb 읽기)
+USER root
+RUN python3 -m venv /opt/py \
+ && /opt/py/bin/pip install --upgrade pip \
+ && /opt/py/bin/pip install \
+      pandas \
+      openpyxl \
+      XlsxWriter \
+      "xlrd<2.0" \
+      pyxlsb
+# venv PATH 노출
+ENV PATH="/opt/py/bin:${PATH}"
+# node 유저가 쓸 수 있게 권한 조정
+RUN chown -R node:node /opt/py
+
 # Set up non-root user
 USER node
 
