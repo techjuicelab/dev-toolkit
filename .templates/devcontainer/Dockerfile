@@ -57,17 +57,27 @@ RUN ARCH=$(dpkg --print-architecture) && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
-# ---- Excel 작업용 Python venv 구성 ----
-# (openpyxl: xlsx 읽기/쓰기, XlsxWriter: xlsx 쓰기, xlrd<2: xls 읽기, pyxlsb: xlsb 읽기)
+# ---- ML/Excel 작업용 Python venv 구성 ----
+# (Excel: openpyxl, XlsxWriter, xlrd, pyxlsb)
+# (ML/DL: scikit-learn, streamlit, plotly, prophet, lightgbm)
 USER root
 RUN python3 -m venv /opt/py \
  && /opt/py/bin/pip install --upgrade pip \
  && /opt/py/bin/pip install \
       pandas \
+      numpy \
       openpyxl \
       XlsxWriter \
       "xlrd<2.0" \
-      pyxlsb
+      pyxlsb \
+      scikit-learn \
+      streamlit \
+      plotly \
+      matplotlib \
+      seaborn \
+      prophet \
+      lightgbm \
+      statsmodels
 # venv PATH 노출
 ENV PATH="/opt/py/bin:${PATH}"
 # node 유저가 쓸 수 있게 권한 조정
