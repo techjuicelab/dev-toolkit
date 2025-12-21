@@ -7,7 +7,7 @@
 # ──────────────────────────────────────────────────────────
 orbstack:reset() {
   # 스크립트 버전 정보
-  local VERSION="1.0.0"
+  local VERSION="1.0.1"
 
   # --version 또는 -v 플래그가 입력되면 버전 정보 출력 후 종료
   if [[ "$1" == "--version" || "$1" == "-v" ]]; then
@@ -231,17 +231,22 @@ orbstack:reset() {
     set_current_step 5; delete_with_progress "$(docker network ls --filter type=custom -q)" "docker network rm" "네트워크 삭제"
     set_current_step 6; echo_info "▶️ 캐시 정리"
 
-    # 시스템 캐시 정리 (OrbStack 최적화)
+    # 시스템 캐시 정리
     echo_info "    - 시스템 캐시 정리"
     log_cmd "docker system prune -af --volumes"
-    update_progress $current_main_step 40
+    update_progress $current_main_step 30
 
     # BuildKit 캐시 정리 (OrbStack은 기본적으로 BuildKit 사용)
     echo_info "    - BuildKit 캐시 정리"
     log_cmd "docker builder prune --all --force 2>/dev/null || true"
-    update_progress $current_main_step 80
+    update_progress $current_main_step 60
 
-    # OrbStack은 Buildx 빌더 재설정이 필요없음 (내장 빌더 사용)
+    # Buildx 캐시 정리 (OrbStack도 buildx 지원)
+    echo_info "    - Buildx 캐시 정리"
+    log_cmd "docker buildx prune --all --force 2>/dev/null || true"
+    update_progress $current_main_step 90
+
+    # 주의: OrbStack은 자동으로 캐시를 관리하므로 빌더 재설정 불필요
     update_progress $current_main_step 100
     echo_success "  - 전체 캐시 정리 완료"
 
@@ -296,10 +301,10 @@ orbstack:reset() {
     if (( final_containers == 0 && final_images == 0 && final_volumes == 0 && final_networks == 0 )); then
       echo_success "  - 완전 정리 검증 ✅ (모든 리소스 삭제 완료)"
       echo_info "  - OrbStack 완전 초기화를 위해서는"
-      echo_info "    'orbstack restart' 명령어로 재시작을 권장합니다."
+      echo_info "    'orb restart docker' 명령어로 재시작을 권장합니다."
     else
       echo_warn "  - 부분 정리 완료 ⚠️ (컨테이너:$final_containers, 이미지:$final_images, 볼륨:$final_volumes, 네트워크:$final_networks)"
-      echo_info "  - 남은 리소스 정리를 위해 'orbstack restart' 실행을 권장합니다."
+      echo_info "  - 남은 리소스 정리를 위해 'orb restart docker' 실행을 권장합니다."
     fi
   }
 

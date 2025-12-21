@@ -161,13 +161,14 @@ orbstack:reset -v
 **기능:**
 - 실행 중인 모든 컨테이너 정지 및 삭제
 - 모든 이미지, 볼륨, 네트워크 삭제
-- 빌드 캐시 정리 (BuildKit)
+- 빌드 캐시 정리 (BuildKit + Buildx)
 - 시스템 정리 및 최적화
-- OrbStack 전용 최적화 (Buildx 의존성 없음)
+- OrbStack 전용 최적화 (빌더 재설정 생략, 자동 캐시 관리)
 
 **Docker vs OrbStack:**
 - `docker:reset`: Docker Desktop 사용자용 (Buildx 빌더 재설정 포함)
-- `orbstack:reset`: OrbStack 사용자용 (경량화된 캐시 정리)
+- `orbstack:reset`: OrbStack 사용자용 (빌더 재설정 없이 캐시만 정리)
+- 재시작: Docker Desktop은 수동 재시작, OrbStack은 `orb restart docker`
 
 ### DevContainer 환경 설정 (`devcontainer:setup`)
 현재 디렉토리에 완전한 DevContainer 환경을 자동으로 설정합니다.
@@ -261,7 +262,7 @@ devcontainer:setup -v
 - `brew:update` - v1.2.0
 - `devcontainer:setup` - v1.2.0
 - `docker:reset` - v1.3.1
-- `orbstack:reset` - v1.0.0
+- `orbstack:reset` - v1.0.1
 
 ---
 

@@ -116,8 +116,9 @@ rm ~/.zsh.d/logs/*.log
 
 **orbstack_reset.sh (OrbStack용):**
 - BuildKit 캐시 정리: `docker builder prune` (동일)
-- Buildx 관련 명령어 제거 (OrbStack은 내장 빌더 사용)
-- OrbStack 재시작 권장: `orbstack restart`
+- Buildx 캐시 정리: `docker buildx prune` (OrbStack도 buildx 지원)
+- Buildx 빌더 재설정은 생략 (OrbStack이 자동으로 캐시 관리)
+- OrbStack 재시작 권장: `orb restart docker`
 - OrbStack 버전 감지: `orbctl` 명령어 사용
 
 ### 버전 관리
@@ -134,7 +135,8 @@ rm ~/.zsh.d/logs/*.log
   - Buildx 빌더 재설정을 포함한 완전한 정리
 - **OrbStack**: `orbstack:reset` 스크립트 실행 시 필요 (선택사항)
   - Docker Desktop의 경량 대안
-  - Buildx 의존성 없이 빠른 캐시 정리
+  - Buildx 지원하며 자동 캐시 관리 (빌더 재설정 불필요)
+  - 재시작: `orb restart docker` 명령어 사용
   - 설치: https://orbstack.dev
 - **mas**: Mac App Store 업데이트용 (선택사항)
 - **VS Code + Dev Containers 확장**: `devcontainer:setup` 사용 시 필요
