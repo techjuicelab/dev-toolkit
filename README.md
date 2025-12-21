@@ -8,7 +8,7 @@
 
 - **ASDF 버전 매니저** 자동 업데이트
 - **Homebrew** 전체 업데이트
-- **Docker** 완전 초기화
+- **Docker / OrbStack** 완전 초기화
 - **DevContainer** 환경 설정 자동화
 
 모든 스크립트는 실시간 진행률 표시, 컬러풀한 UI, 그리고 상세한 로깅 기능을 제공합니다.
@@ -19,7 +19,8 @@
 ~/.zsh.d/
 ├── asdf_update.sh         # ASDF 플러그인 및 도구 업데이트
 ├── brew_update.sh         # Homebrew 전체 업데이트
-├── docker_reset.sh        # Docker 완전 초기화
+├── docker_reset.sh        # Docker 완전 초기화 (Docker Desktop용)
+├── orbstack_reset.sh      # OrbStack 완전 초기화 (OrbStack용)
 ├── devcontainer_setup.sh  # DevContainer 환경 설정 자동화
 ├── .templates/            # DevContainer 템플릿 파일들 (숨김 폴더)
 │   └── devcontainer/
@@ -71,7 +72,7 @@ EOF
 source ~/.zshrc
 
 # 함수가 제대로 로드되었는지 확인
-type asdf:update brew:update docker:reset devcontainer:setup
+type asdf:update brew:update docker:reset orbstack:reset devcontainer:setup
 ```
 
 ### 5. 설정 확인 (선택사항)
@@ -140,8 +141,33 @@ docker:reset -v
 **기능:**
 - 실행 중인 모든 컨테이너 정지 및 삭제
 - 모든 이미지, 볼륨, 네트워크 삭제
-- 빌드 캐시 정리
+- 빌드 캐시 정리 (BuildKit + Buildx)
 - 시스템 정리 및 최적화
+- Docker Desktop 전용 최적화
+
+### OrbStack 초기화 (`orbstack:reset`)
+OrbStack의 모든 컨테이너, 이미지, 볼륨, 네트워크를 완전히 초기화합니다.
+
+```bash
+# OrbStack 완전 초기화
+orbstack:reset
+
+# 버전 확인
+orbstack:reset --version
+# 또는
+orbstack:reset -v
+```
+
+**기능:**
+- 실행 중인 모든 컨테이너 정지 및 삭제
+- 모든 이미지, 볼륨, 네트워크 삭제
+- 빌드 캐시 정리 (BuildKit)
+- 시스템 정리 및 최적화
+- OrbStack 전용 최적화 (Buildx 의존성 없음)
+
+**Docker vs OrbStack:**
+- `docker:reset`: Docker Desktop 사용자용 (Buildx 빌더 재설정 포함)
+- `orbstack:reset`: OrbStack 사용자용 (경량화된 캐시 정리)
 
 ### DevContainer 환경 설정 (`devcontainer:setup`)
 현재 디렉토리에 완전한 DevContainer 환경을 자동으로 설정합니다.
@@ -212,16 +238,21 @@ devcontainer:setup -v
 - **Git**: 버전 관리 시스템
 - **ASDF**: 버전 매니저 (asdf:update 사용시)
 - **Homebrew**: 패키지 매니저 (brew:update 사용시)
-- **Docker**: 컨테이너 플랫폼 (docker:reset 사용시)
+- **Docker Desktop**: 컨테이너 플랫폼 (docker:reset 사용시)
+- **OrbStack**: 경량 컨테이너 플랫폼 (orbstack:reset 사용시)
+  - Docker Desktop의 경량 대안
+  - 설치: https://orbstack.dev
 - **VS Code + Dev Containers 확장**: DevContainer 환경 사용시
 
 ## 🛡️ 주의사항
 
-- `docker:reset`은 모든 Docker 데이터를 삭제하므로 신중하게 사용하세요
+- `docker:reset`과 `orbstack:reset`은 모든 컨테이너 데이터를 삭제하므로 신중하게 사용하세요
+  - **Docker Desktop 사용자**: `docker:reset` 사용
+  - **OrbStack 사용자**: `orbstack:reset` 사용 (더 빠르고 경량)
 - `devcontainer:setup`은 현재 디렉토리에 .devcontainer 폴더를 생성하므로 프로젝트 루트에서 실행하세요
 - 업데이트 작업은 인터넷 연결이 필요합니다
 - 로그 파일은 자동으로 누적되므로 주기적으로 정리해주세요
-- DevContainer 환경은 VS Code와 Docker가 모두 설치되어 있어야 정상 작동합니다
+- DevContainer 환경은 VS Code와 Docker/OrbStack이 모두 설치되어 있어야 정상 작동합니다
 
 ## 📝 버전 정보
 
@@ -230,6 +261,7 @@ devcontainer:setup -v
 - `brew:update` - v1.2.0
 - `devcontainer:setup` - v1.2.0
 - `docker:reset` - v1.3.1
+- `orbstack:reset` - v1.0.0
 
 ---
 

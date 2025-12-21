@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-이 프로젝트는 macOS 개발 환경 관리를 위한 ZSH 자동화 스크립트 모음입니다. 세 가지 핵심 기능을 제공합니다:
+이 프로젝트는 macOS 개발 환경 관리를 위한 ZSH 자동화 스크립트 모음입니다. 다섯 가지 핵심 기능을 제공합니다:
 
 - **ASDF 버전 매니저**: 플러그인 및 개발 도구 자동 업데이트
-- **Homebrew**: Formulae, Cask, Mac App Store 앱 통합 업데이트  
-- **Docker**: 컨테이너, 이미지, 볼륨, 네트워크 완전 초기화
+- **Homebrew**: Formulae, Cask, Mac App Store 앱 통합 업데이트
+- **Docker**: 컨테이너, 이미지, 볼륨, 네트워크 완전 초기화 (Docker Desktop용)
+- **OrbStack**: 컨테이너, 이미지, 볼륨, 네트워크 완전 초기화 (OrbStack용, 경량 최적화)
+- **DevContainer**: VS Code DevContainer 환경 자동 설정
 
 ## 아키텍처 특징
 
@@ -36,16 +38,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # ASDF 환경 업데이트
 asdf:update
 
-# Homebrew 전체 업데이트  
+# Homebrew 전체 업데이트
 brew:update
 
-# Docker 완전 초기화
+# Docker 완전 초기화 (Docker Desktop용)
 docker:reset
+
+# OrbStack 완전 초기화 (OrbStack용, 더 빠름)
+orbstack:reset
+
+# DevContainer 환경 설정
+devcontainer:setup
 
 # 버전 확인
 asdf:update --version
 brew:update -v
 docker:reset --version
+orbstack:reset --version
+devcontainer:setup -v
 ```
 
 ### 설정 및 설치
@@ -58,7 +68,7 @@ chmod +x ~/.zsh.d/*.sh
 source ~/.zshrc
 
 # 함수 로드 확인
-type asdf:update brew:update docker:reset
+type asdf:update brew:update docker:reset orbstack:reset devcontainer:setup
 ```
 
 ### 로그 관리
@@ -91,9 +101,24 @@ rm ~/.zsh.d/logs/*.log
 - 타임스탬프 포함 메시지 로깅
 
 ### 오류 처리
-- 외부 명령어 의존성 확인 (asdf, brew, docker)
+- 외부 명령어 의존성 확인 (asdf, brew, docker/orbstack)
 - 사용자 확인 프롬프트에서 기본값을 안전한 옵션으로 설정
 - 스크립트 중단 시 `cleanup()` 함수로 커서 복원
+
+### Docker vs OrbStack 스크립트 차이점
+두 스크립트는 거의 동일한 구조이지만 다음 차이점이 있습니다:
+
+**docker_reset.sh (Docker Desktop용):**
+- BuildKit 캐시 정리: `docker builder prune`
+- Buildx 캐시 정리: `docker buildx prune`
+- Buildx 빌더 재설정: `docker buildx rm` + `docker buildx create`
+- Docker Desktop 재시작 권장 메시지
+
+**orbstack_reset.sh (OrbStack용):**
+- BuildKit 캐시 정리: `docker builder prune` (동일)
+- Buildx 관련 명령어 제거 (OrbStack은 내장 빌더 사용)
+- OrbStack 재시작 권장: `orbstack restart`
+- OrbStack 버전 감지: `orbctl` 명령어 사용
 
 ### 버전 관리
 - 각 스크립트의 `VERSION` 변수 업데이트
@@ -104,9 +129,15 @@ rm ~/.zsh.d/logs/*.log
 
 - **Zsh**: 배열 인덱싱이 1-based임에 주의
 - **ASDF**: `asdf:update` 스크립트 실행 시 필요
-- **Homebrew**: `brew:update` 스크립트 실행 시 필요  
-- **Docker**: `docker:reset` 스크립트 실행 시 필요
+- **Homebrew**: `brew:update` 스크립트 실행 시 필요
+- **Docker Desktop**: `docker:reset` 스크립트 실행 시 필요
+  - Buildx 빌더 재설정을 포함한 완전한 정리
+- **OrbStack**: `orbstack:reset` 스크립트 실행 시 필요 (선택사항)
+  - Docker Desktop의 경량 대안
+  - Buildx 의존성 없이 빠른 캐시 정리
+  - 설치: https://orbstack.dev
 - **mas**: Mac App Store 업데이트용 (선택사항)
+- **VS Code + Dev Containers 확장**: `devcontainer:setup` 사용 시 필요
 
 ## 테스트 시나리오
 
