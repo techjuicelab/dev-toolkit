@@ -100,11 +100,15 @@ asdf:update
 asdf:update --version
 # 또는
 asdf:update -v
+
+# 도움말 확인
+asdf:update --help
 ```
 
 **기능:**
 - 플러그인 자동 업데이트
 - 설치된 모든 도구의 최신 버전 확인 및 업데이트
+- 병렬 버전 조회로 빠른 업데이트 (최대 4개 동시 처리)
 - 실시간 진행률 표시
 - 상세한 로그 기록
 
@@ -119,6 +123,9 @@ brew:update
 brew:update --version
 # 또는
 brew:update -v
+
+# 도움말 확인
+brew:update --help
 ```
 
 **기능:**
@@ -139,6 +146,9 @@ docker:reset
 docker:reset --version
 # 또는
 docker:reset -v
+
+# 도움말 확인
+docker:reset --help
 ```
 
 **기능:**
@@ -158,6 +168,9 @@ devcontainer:setup
 devcontainer:setup --version
 # 또는
 devcontainer:setup -v
+
+# 도움말 확인
+devcontainer:setup --help
 ```
 
 **기능:**
@@ -202,12 +215,21 @@ devcontainer:setup -v
 - 오류 및 경고 메시지
 - 업데이트된 항목들의 상세 정보
 
+### 로그 자동 관리
+- **보관 기간**: 7일 이상 된 로그 자동 삭제
+- **최대 파일 수**: 30개 초과 시 가장 오래된 파일 삭제
+- **용량 경고**: 100MB 초과 시 경고 표시
+- **파일 권한**: chmod 600 (소유자만 읽기/쓰기)
+
 ## 🎨 UI 특징
 
 - **실시간 진행률 바**: 각 작업의 진행 상황을 시각적으로 표시
 - **컬러풀한 출력**: 상태별로 다른 색상을 사용하여 가독성 향상
 - **단계별 안내**: 현재 수행 중인 작업을 명확하게 표시
 - **통계 정보**: 업데이트된 항목 수, 소요 시간 등 요약 정보 제공
+- **접근성**: 색상 + 텍스트 레이블 이중 표시 (색맹 사용자 지원)
+- **NO_COLOR 지원**: 색상 미지원 환경 자동 감지
+- **터미널 감지**: 크기에 따른 동적 레이아웃 조정
 
 ## 🔧 필수 요구사항
 
@@ -233,7 +255,7 @@ devcontainer:setup -v
 - `docker:reset`은 모든 Docker 데이터를 삭제하므로 신중하게 사용하세요
 - `devcontainer:setup`은 현재 디렉토리에 .devcontainer 폴더를 생성하므로 프로젝트 루트에서 실행하세요
 - 업데이트 작업은 인터넷 연결이 필요합니다
-- 로그 파일은 자동으로 누적되므로 주기적으로 정리해주세요
+- 로그 파일은 자동 로테이션됩니다 (7일 보관, 최대 30개)
 - DevContainer 환경은 VS Code와 Docker가 모두 설치되어 있어야 정상 작동합니다
 
 ## 🔧 문제 해결
@@ -291,16 +313,44 @@ ls -la ~/.zsh.d/lib/
 ls -la ./lib/
 ```
 
+## 🧪 테스트
+
+```bash
+# 전체 테스트 스위트 실행 (85개 테스트)
+zsh test/run_tests.zsh
+```
+
+테스트 범위:
+- **config**: 색상, 상수, 이모지, 로그 설정 검증 (47개)
+- **helpers**: 로깅, 재시도, 타임아웃, 로그 로테이션 검증 (13개)
+- **ui**: 박스 드로잉, 진행률, 메시지, 의존성 검사 검증 (25개)
+
+## ⚙️ 설정 커스터마이징
+
+`lib/config.local.zsh`를 생성하여 개인 설정을 오버라이드할 수 있습니다:
+
+```bash
+# 예시 파일 복사
+cp lib/config.local.zsh.example lib/config.local.zsh
+```
+
+커스터마이징 가능한 항목:
+- 색상 팔레트 변경
+- 진행 바 스타일 (`█░` 등)
+- 로그 보관 기간 및 최대 파일 수
+- 명령어 타임아웃 값
+- 박스 너비, 진행률 바 위치
+
+`NO_COLOR` 환경 변수 설정 시 색상 출력이 비활성화됩니다.
+
 ## 📝 버전 정보
 
-**현재 스크립트 버전 (v2.0):**
-- `asdf:update` - v2.0.0
-- `brew:update` - v2.0.0
-- `devcontainer:setup` - v2.0.0
-- `docker:reset` - v2.0.0
-- `lib/config.zsh` - v2.0.0
-- `lib/ui-framework.zsh` - v2.0.0
-- `lib/helpers.zsh` - v2.0.0
+**현재 스크립트 버전:**
+- `asdf:update` - v1.4.0
+- `brew:update` - v1.3.0
+- `docker:reset` - v1.3.1
+- `devcontainer:setup` - v1.2.0
+- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.0.0
 
 ---
 
