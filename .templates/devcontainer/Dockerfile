@@ -78,8 +78,6 @@ RUN python3 -m venv /opt/py \
       prophet \
       lightgbm \
       statsmodels
-# venv PATH 노출
-ENV PATH="/opt/py/bin:${PATH}"
 # node 유저가 쓸 수 있게 권한 조정
 RUN chown -R node:node /opt/py
 
@@ -88,7 +86,8 @@ USER node
 
 # Install global packages
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
+# 명시적 절대 경로 사용 (보안: 신뢰할 수 없는 $PATH 의존 방지)
+ENV PATH=/opt/py/bin:/usr/local/share/npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Set the default shell to zsh rather than sh
 ENV SHELL=/bin/zsh
@@ -99,13 +98,18 @@ ENV VISUAL=nano
 
 # Default powerline10k theme
 ARG ZSH_IN_DOCKER_VERSION=1.2.0
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
-  -p git \
-  -p fzf \
-  -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-  -a "source /usr/share/doc/fzf/examples/completion.zsh" \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  -x
+# 원격 스크립트를 먼저 다운로드 후 실행 (보안: 파이프 실행 방지)
+RUN wget -O /tmp/zsh-in-docker.sh \
+    "https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh" && \
+    chmod +x /tmp/zsh-in-docker.sh && \
+    sh /tmp/zsh-in-docker.sh \
+      -p git \
+      -p fzf \
+      -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
+      -a "source /usr/share/doc/fzf/examples/completion.zsh" \
+      -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
+      -x && \
+    rm -f /tmp/zsh-in-docker.sh
 
 # Install Claude
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}

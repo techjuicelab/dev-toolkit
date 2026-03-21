@@ -24,6 +24,31 @@ if [[ -z "$TERM" || "$TERM" == "dumb" ]]; then
   UI_TUI_ENABLED=false
 fi
 
+# NO_COLOR 환경 변수 지원 (https://no-color.org/)
+if [[ -n "${NO_COLOR:-}" ]]; then
+  UI_TUI_ENABLED=false
+fi
+
+# ─── 터미널 크기 감지 ──────────────────────────────
+if [[ "$UI_TUI_ENABLED" == true ]]; then
+  UI_TERMINAL_LINES=$(tput lines 2>/dev/null || echo 24)
+  UI_TERMINAL_COLS=$(tput cols 2>/dev/null || echo 80)
+
+  # 최소 터미널 크기 확인 (80x24)
+  if (( UI_TERMINAL_COLS < 80 || UI_TERMINAL_LINES < 24 )); then
+    echo "⚠️  터미널 크기가 작습니다 (${UI_TERMINAL_COLS}x${UI_TERMINAL_LINES}). 최소 80x24 권장." >&2
+  fi
+else
+  UI_TERMINAL_LINES=24
+  UI_TERMINAL_COLS=80
+fi
+
+# 진행률 바 위치를 터미널 높이에 맞게 조정
+UI_PROGRESS_BAR_LINE=${PROGRESS_BAR_LINE:-$((UI_TERMINAL_LINES - 2))}
+
+# 메시지 영역 크기를 터미널 높이에 맞게 조정
+UI_MAX_MESSAGES=${MAX_MESSAGES:-$((UI_PROGRESS_BAR_LINE - MESSAGE_LINE - 2))}
+
 # TUI 비활성화 시 색상 변수를 빈 문자열로 재정의
 if [[ "$UI_TUI_ENABLED" != true ]]; then
   COLOR_RESET=''
@@ -99,18 +124,13 @@ ui_create_title_box() {
   local left_padding=$((inner_padding / 2 + 2))
   local right_padding=$((inner_padding - left_padding + 2))
 
-  # 수평선 생성 (박스 크기 기준)
-  local horizontal_line=""
-  for ((i=0; i<box_width; i++)); do
-    horizontal_line+="═"
-  done
+  # 수평선 생성 (박스 크기 기준) - printf로 루프 대체하여 성능 최적화
+  local horizontal_line=$(printf '═%.0s' $(seq 1 $box_width))
 
-  # 제목 라인 생성 (실제 표시 기준 패딩)
-  local title_line="║"
-  for ((i=0; i<left_padding; i++)); do title_line+=" "; done
-  title_line+="$title"
-  for ((i=0; i<right_padding; i++)); do title_line+=" "; done
-  title_line+="║"
+  # 제목 라인 생성 (실제 표시 기준 패딩) - printf로 루프 대체하여 성능 최적화
+  local left_spaces=$(printf ' %.0s' $(seq 1 $left_padding))
+  local right_spaces=$(printf ' %.0s' $(seq 1 $right_padding))
+  local title_line="║${left_spaces}${title}${right_spaces}║"
 
   echo -e "${COLOR_BOLD}${COLOR_CYAN}╔${horizontal_line}╗${COLOR_RESET}"
   echo -e "${COLOR_BOLD}${COLOR_CYAN}${title_line}${COLOR_RESET}"
@@ -122,7 +142,7 @@ ui_create_title_box() {
 # ═══════════════════════════════════════════════════════
 
 # 글로벌 메시지 라인 카운터
-# MESSAGE_LINE, MAX_MESSAGES는 config.zsh에서 로드됨
+# MESSAGE_LINE은 config.zsh에서 로드, UI_MAX_MESSAGES는 동적 계산됨
 UI_CURRENT_MESSAGE_LINE=$MESSAGE_LINE
 
 # 메시지 출력 (화면 + 로그 파일)
@@ -133,14 +153,15 @@ ui_add_message() {
   local message="$2"
   local log_file="$3"
 
-  # 로그 파일에 기록 (경로가 지정된 경우)
+  # 로그 파일에는 ANSI 코드 없이 순수 텍스트만 기록
   if [[ -n "$log_file" ]]; then
-    echo -e "$(date "+${LOG_FORMAT}") - $message" >> "$log_file"
+    local clean_message=$(echo -e "$message" | sed 's/\x1b\[[0-9;]*m//g')
+    echo "$(date "+${LOG_FORMAT}") - $clean_message" >> "$log_file"
   fi
 
   if [[ "$UI_TUI_ENABLED" == true ]]; then
     # 메시지 영역 초과 시 스크롤 리셋
-    if [ $UI_CURRENT_MESSAGE_LINE -gt $((MESSAGE_LINE + MAX_MESSAGES)) ]; then
+    if [ $UI_CURRENT_MESSAGE_LINE -gt $((MESSAGE_LINE + UI_MAX_MESSAGES)) ]; then
       ui_move_to_line $MESSAGE_LINE
       ui_clear_from_cursor
       UI_CURRENT_MESSAGE_LINE=$MESSAGE_LINE
@@ -160,19 +181,19 @@ ui_add_message() {
 UI_LOG_FILE=""
 
 ui_echo_info() {
-  ui_add_message "$COLOR_CYAN" "${EMOJI[info]}  $1" "$UI_LOG_FILE"
+  ui_add_message "$COLOR_CYAN" "${EMOJI[info]}  [INFO] $1" "$UI_LOG_FILE"
 }
 
 ui_echo_success() {
-  ui_add_message "$COLOR_GREEN" "${EMOJI[success]} $1" "$UI_LOG_FILE"
+  ui_add_message "$COLOR_GREEN" "${EMOJI[success]} [OK] $1" "$UI_LOG_FILE"
 }
 
 ui_echo_warn() {
-  ui_add_message "$COLOR_ORANGE" "${EMOJI[warning]}  $1" "$UI_LOG_FILE"
+  ui_add_message "$COLOR_ORANGE" "${EMOJI[warning]}  [WARN] $1" "$UI_LOG_FILE"
 }
 
 ui_echo_error() {
-  ui_add_message "${COLOR_RED}${COLOR_BOLD}" "${EMOJI[error]} $1" "$UI_LOG_FILE"
+  ui_add_message "${COLOR_RED}${COLOR_BOLD}" "${EMOJI[error]} [ERROR] $1" "$UI_LOG_FILE"
 }
 
 # ═══════════════════════════════════════════════════════
@@ -223,7 +244,7 @@ ui_set_current_step() {
 }
 
 # 진행 바 렌더링
-# config.zsh의 PROGRESS_BAR_LINE, BAR_FILLED, BAR_EMPTY 등 사용
+# UI_PROGRESS_BAR_LINE (동적 계산), BAR_FILLED, BAR_EMPTY 등 사용
 ui_draw_progress_bar() {
   [[ "$UI_TUI_ENABLED" != true ]] && return
 
@@ -236,16 +257,20 @@ ui_draw_progress_bar() {
   local fill=$((len * pct / 100))
   local emp=$((len - fill))
 
+  # printf로 루프 대체하여 성능 최적화 (fill/emp가 0인 경우 빈 문자열 유지)
   local bar_filled="" bar_empty=""
-  for ((i=0; i<fill; i++)); do bar_filled+="${BAR_FILLED}"; done
-  for ((i=0; i<emp; i++)); do bar_empty+="${BAR_EMPTY}"; done
+  if (( fill > 0 )); then
+    bar_filled=$(printf "${BAR_FILLED}%.0s" $(seq 1 $fill))
+  fi
+  if (( emp > 0 )); then
+    bar_empty=$(printf "${BAR_EMPTY}%.0s" $(seq 1 $emp))
+  fi
 
   local progress_color="${COLOR_CYAN}"
   ((pct >= 100)) && progress_color="${COLOR_GREEN}"
 
-  ui_move_to_line $PROGRESS_BAR_LINE
-  ui_clear_line
-  ui_clear_from_cursor
+  # 3개 ANSI 시퀀스를 1개로 통합 (move_to_line + clear_line + clear_from_cursor)
+  printf "\e[${UI_PROGRESS_BAR_LINE};0H\e[2K"
   printf "${COLOR_BOLD}${COLOR_PURPLE}${EMOJI[progress]} 전체 진행:${COLOR_RESET} ${BAR_BORDER_LEFT}${progress_color}%s${COLOR_RESET}${COLOR_DIM}%s${COLOR_RESET}${BAR_BORDER_RIGHT} ${COLOR_BOLD}${COLOR_GREEN}%3d%%${COLOR_RESET} ${COLOR_DIM}|${COLOR_RESET} %s\n" \
     "$bar_filled" "$bar_empty" "$pct" "$name"
 }
@@ -328,7 +353,7 @@ ui_check_dependency() {
 ui_cleanup() {
   ui_show_cursor
   if [[ "$UI_TUI_ENABLED" == true ]]; then
-    ui_move_to_line $((PROGRESS_BAR_LINE + 2))
+    ui_move_to_line $((UI_PROGRESS_BAR_LINE + 2))
   fi
 }
 

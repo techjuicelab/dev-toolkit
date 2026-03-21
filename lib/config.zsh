@@ -73,4 +73,6 @@ RETRY_DELAY_SECONDS=1
 # ─── 사용자 설정 오버라이드 ────────────────────────
 # config.local.zsh가 있으면 로드 (개인 설정)
 local config_local="${0:A:h}/config.local.zsh"
-[[ -f "$config_local" ]] && source "$config_local"
+if [[ -f "$config_local" ]]; then
+  source "$config_local"
+fi
