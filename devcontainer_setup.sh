@@ -9,17 +9,29 @@ devcontainer:setup() {
   # 스크립트 버전 정보
   local VERSION="1.2.0"
 
+  # 공유 라이브러리 로드
+  local LIB_DIR="${0:A:h}/lib"
+  source "${LIB_DIR}/ui-framework.zsh" || { echo "ERROR: ui-framework.zsh 로드 실패"; return 1; }
+  source "${LIB_DIR}/helpers.zsh" || { echo "ERROR: helpers.zsh 로드 실패"; return 1; }
+
   # --version 또는 -v 플래그가 입력되면 버전 정보 출력 후 종료
   if [[ "$1" == "--version" || "$1" == "-v" ]]; then
     echo "devcontainer:setup version $VERSION"
     return 0
-  fi
+  elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    cat << 'EOF'
+사용법: devcontainer:setup [옵션]
 
-  # 🎨 색상 팔레트
-  local reset=$'\e[0m'; local bold=$'\e[1m'; local dim=$'\e[2m'
-  local green=$'\e[38;5;46m'; local red=$'\e[38;5;196m'; local yellow=$'\e[38;5;226m'
-  local blue=$'\e[38;5;39m'; local cyan=$'\e[38;5;51m'; local magenta=$'\e[38;5;201m'
-  local purple=$'\e[38;5;141m'; local orange=$'\e[38;5;208m'
+옵션:
+  --help, -h      이 도움말을 표시합니다
+  --version, -v   버전 정보를 표시합니다
+
+설명:
+  현재 프로젝트에 DevContainer 환경을 자동 설정합니다.
+  .devcontainer 폴더에 Dockerfile, devcontainer.json, 방화벽 설정 등을 생성합니다.
+EOF
+    return 0
+  fi
 
   # 📁 경로 설정
   local SOURCE_TEMPLATE_DIR="$HOME/.zsh.d/.templates/devcontainer"
@@ -30,147 +42,90 @@ devcontainer:setup() {
   # 메시지 정의
   local MSG_TITLE="DevContainer Setup by TechJuiceLab v${VERSION}"
   local MSG_WARNING="🚨 현재 디렉토리에 .devcontainer 폴더를 생성합니다!"
-  local MSG_PROMPT="진행하시겠습니까? (Y/n): "
   local MSG_CANCELED="취소되었습니다."
   local MSG_COMPLETE="🎉 DevContainer 설정 완료!"
 
-  # ─── 제목 박스 함수 ──────────
-  print_title_box() {
-    local title="$1"
-    local box_width=54
-
-    # 실제 터미널 표시 너비 계산
-    local str_len=${#title}
-    local emoji_count=$(echo "$title" | grep -oE '[🐳🛠️🎯]' | wc -l | tr -d ' ')
-    local hangul_count=$(echo "$title" | grep -oE '[가-힣]' | wc -l | tr -d ' ')
-    local display_width=$((str_len + emoji_count + hangul_count))
-
-    # 박스 내부 여백 계산
-    local inner_padding=$((box_width - display_width - 2))
-    local left_padding=$((inner_padding / 2 + 2))
-    local right_padding=$((inner_padding - left_padding + 2))
-
-    # 수평선 생성
-    local horizontal_line=""
-    for ((i=0; i<box_width; i++)); do
-      horizontal_line+="═"
-    done
-
-    # 제목 라인 생성
-    local title_line="║"
-    for ((i=0; i<left_padding; i++)); do title_line+=" "; done
-    title_line+="$title"
-    for ((i=0; i<right_padding; i++)); do title_line+=" "; done
-    title_line+="║"
-
-    echo -e "${bold}${cyan}╔${horizontal_line}╗${reset}"
-    echo -e "${bold}${cyan}${title_line}${reset}"
-    echo -e "${bold}${cyan}╚${horizontal_line}╝${reset}"
-  }
-
-  # ─── 메시지 출력 함수 ───────────
-  echo_info() { echo -e "${cyan}ℹ️  $1${reset}"; }
-  echo_success() { echo -e "${green}✅ $1${reset}"; }
-  echo_warn() { echo -e "${orange}⚠️  $1${reset}"; }
-  echo_error() { echo -e "${red}❌ $1${reset}"; }
-
-  # ─── 사용자 확인 ─────────────
-  confirm_prompt() {
-    echo_warn "$MSG_WARNING"
-    printf "${cyan}${MSG_PROMPT}${reset}"
-    local ans
-    read ans
-
-    # 빈 입력(엔터만) 또는 Y/y는 실행
-    if [[ -z "$ans" || "$ans" =~ ^[Yy]$ ]]; then
-      return 0
-    # n/N만 취소
-    elif [[ "$ans" =~ ^[Nn]$ ]]; then
-      echo_error "$MSG_CANCELED"
-      return 1
-    else
-      echo_warn "잘못된 입력입니다. Y 또는 n을 입력하세요."
-      return $(confirm_prompt)
-    fi
-  }
-
   # ─── 디렉토리 검사 ───────────
   check_directories() {
-    echo_info "▶️ 환경 검사"
+    ui_echo_info "▶️ 환경 검사"
 
     if [[ ! -d "$SOURCE_TEMPLATE_DIR" ]]; then
-      echo_error "템플릿 디렉토리를 찾을 수 없습니다: $SOURCE_TEMPLATE_DIR"
+      ui_echo_error "템플릿 디렉토리를 찾을 수 없습니다: $SOURCE_TEMPLATE_DIR"
       return 1
     fi
 
     if [[ ! -d "$CLAUDE_SOURCE_DIR" ]]; then
-      echo_error "Claude 설정 디렉토리를 찾을 수 없습니다: $CLAUDE_SOURCE_DIR"
+      ui_echo_error "Claude 설정 디렉토리를 찾을 수 없습니다: $CLAUDE_SOURCE_DIR"
       return 1
     fi
 
     if [[ -d "$TARGET_DIR" ]]; then
-      echo_warn "  - .devcontainer 폴더가 이미 존재합니다. 덮어쓰시겠습니까? (Y/n): "
-      local ans
-      read ans
-      if [[ "$ans" =~ ^[Nn]$ ]]; then
-        echo_error "작업이 취소되었습니다."
+      ui_echo_warn "  - .devcontainer 폴더가 이미 존재합니다."
+      if ! ui_confirm "덮어쓰시겠습니까?"; then
+        ui_echo_error "작업이 취소되었습니다."
         return 1
       fi
-      echo_info "  - 기존 .devcontainer 폴더를 백업합니다..."
+      ui_echo_info "  - 기존 .devcontainer 폴더를 백업합니다..."
       mv "$TARGET_DIR" "${TARGET_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
     fi
 
-    echo_success "  - 환경 검사 완료"
+    ui_echo_success "  - 환경 검사 완료"
   }
 
   # ─── 기본 파일 복사 ─────────
   copy_base_files() {
-    echo_info "▶️ 기본 파일 복사"
-
-    # .devcontainer 디렉토리 생성
-    mkdir -p "$TARGET_DIR"
-
-    # 기본 템플릿 파일들 복사
-    cp "$SOURCE_TEMPLATE_DIR/devcontainer.json" "$TARGET_DIR/"
-    cp "$SOURCE_TEMPLATE_DIR/Dockerfile" "$TARGET_DIR/"
-    cp "$SOURCE_TEMPLATE_DIR/init-firewall.sh" "$TARGET_DIR/"
-
-    echo_success "  - 기본 파일 복사 완료"
+    ui_echo_info "▶️  기본 파일 복사"
+    if ! mkdir -p "$TARGET_DIR"; then
+      ui_echo_error "  - $TARGET_DIR 생성 실패"
+      return 1
+    fi
+    local -a files=("devcontainer.json" "Dockerfile" "init-firewall.sh")
+    for file in "${files[@]}"; do
+      if [[ ! -f "$SOURCE_TEMPLATE_DIR/$file" ]]; then
+        ui_echo_error "  - 소스 파일 없음: $SOURCE_TEMPLATE_DIR/$file"
+        return 1
+      fi
+      if ! cp "$SOURCE_TEMPLATE_DIR/$file" "$TARGET_DIR/"; then
+        ui_echo_error "  - $file 복사 실패"
+        return 1
+      fi
+    done
+    ui_echo_success "  - 기본 파일 복사 완료"
   }
 
   # ─── 개인화 설정 복사 ───────
   copy_personal_settings() {
-    echo_info "▶️ 개인화 설정 복사"
+    ui_echo_info "▶️ 개인화 설정 복사"
 
     # Claude 설정 복사
-    echo_info "  - Claude 설정 복사 중..."
+    ui_echo_info "  - Claude 설정 복사 중..."
     cp -r "$CLAUDE_SOURCE_DIR" "$TARGET_DIR/.claude"
-    echo_success "    - Claude 설정 복사 완료"
+    ui_echo_success "    - Claude 설정 복사 완료"
 
     # ccstatusline 설정 복사 (있는 경우에만)
     if [[ -d "$CCSTATUSLINE_SOURCE_DIR" ]]; then
-      echo_info "  - ccstatusline 설정 복사 중..."
+      ui_echo_info "  - ccstatusline 설정 복사 중..."
       cp -r "$CCSTATUSLINE_SOURCE_DIR" "$TARGET_DIR/ccstatusline"
-      echo_success "    - ccstatusline 설정 복사 완료"
+      ui_echo_success "    - ccstatusline 설정 복사 완료"
     else
-      echo_warn "    - ccstatusline 설정을 찾을 수 없습니다. 건너뜁니다."
+      ui_echo_warn "    - ccstatusline 설정을 찾을 수 없습니다. 건너뜁니다."
     fi
 
     # powerlevel10k 설정 복사 (있는 경우에만)
     if [[ -f "$HOME/.p10k.zsh" ]]; then
-      echo_info "  - powerlevel10k 설정 복사 중..."
+      ui_echo_info "  - powerlevel10k 설정 복사 중..."
       cp "$HOME/.p10k.zsh" "$TARGET_DIR/.p10k.zsh"
-      echo_success "    - powerlevel10k 설정 복사 완료"
+      ui_echo_success "    - powerlevel10k 설정 복사 완료"
     else
-      echo_warn "    - .p10k.zsh 파일을 찾을 수 없습니다. 건너뜁니다."
+      ui_echo_warn "    - .p10k.zsh 파일을 찾을 수 없습니다. 건너뜁니다."
     fi
 
-    echo_success "  - 개인화 설정 복사 완료"
+    ui_echo_success "  - 개인화 설정 복사 완료"
   }
 
   # ─── docker-zshrc 생성 ──────
   create_docker_zshrc() {
-    echo_info "▶️ docker-zshrc 생성"
+    ui_echo_info "▶️ docker-zshrc 생성"
 
     cat > "$TARGET_DIR/docker-zshrc" << 'EOF'
 # Docker Container용 zsh 설정
@@ -220,12 +175,12 @@ fi
 echo "🐳 DevContainer 환경이 준비되었습니다!"
 EOF
 
-    echo_success "  - docker-zshrc 생성 완료"
+    ui_echo_success "  - docker-zshrc 생성 완료"
   }
 
   # ─── Dockerfile 업데이트 ────
   update_dockerfile() {
-    echo_info "▶️ Dockerfile 업데이트"
+    ui_echo_info "▶️ Dockerfile 업데이트"
 
     # 기존 Dockerfile에 개인화 설정 추가 (이미 설치된 요소들 제외)
     cat >> "$TARGET_DIR/Dockerfile" << 'EOF'
@@ -250,12 +205,12 @@ COPY --chown=node:node ccstatusline /home/node/.config/ccstatusline
 COPY --chown=node:node docker-zshrc /home/node/.zshrc
 EOF
 
-    echo_success "  - Dockerfile 업데이트 완료"
+    ui_echo_success "  - Dockerfile 업데이트 완료"
   }
 
   # ─── README 생성 ──────────
   create_readme() {
-    echo_info "▶️ README 생성"
+    ui_echo_info "▶️ README 생성"
 
     cat > "$TARGET_DIR/README.md" << 'EOF'
 # DevContainer 환경 설정
@@ -296,16 +251,25 @@ EOF
 - 소스 설정: 현재 Mac 환경 (~/.claude, ~/.p10k.zsh, ~/.config/ccstatusline)
 EOF
 
-    echo_success "  - README 생성 완료"
+    ui_echo_success "  - README 생성 완료"
+  }
+
+  # ─── 실패 시 정리 함수 ───────
+  cleanup_on_failure() {
+    if [[ -d "$TARGET_DIR" && -n "$TARGET_DIR" ]]; then
+      ui_echo_error "설정 중 오류 발생, 생성된 파일을 정리합니다..."
+      rm -rf "$TARGET_DIR"
+    fi
   }
 
   # ─── 메인 실행 함수 ───────────
   main() {
     clear
-    print_title_box "$MSG_TITLE"
+    ui_create_title_box "$MSG_TITLE" 54
     echo
 
-    if confirm_prompt; then
+    ui_echo_warn "$MSG_WARNING"
+    if ui_confirm "진행하시겠습니까?"; then
       echo
 
       if check_directories && \
@@ -316,14 +280,17 @@ EOF
          create_readme; then
 
         echo
-        echo_success "$MSG_COMPLETE"
-        echo_info "📁 생성된 폴더: $(pwd)/$TARGET_DIR"
-        echo_info "🚀 VS Code에서 'Dev Containers: Reopen in Container'를 실행하세요"
-        echo_info "📖 자세한 정보: $TARGET_DIR/README.md"
+        ui_echo_success "$MSG_COMPLETE"
+        ui_echo_info "📁 생성된 폴더: $(pwd)/$TARGET_DIR"
+        ui_echo_info "🚀 VS Code에서 'Dev Containers: Reopen in Container'를 실행하세요"
+        ui_echo_info "📖 자세한 정보: $TARGET_DIR/README.md"
       else
-        echo_error "설정 중 오류가 발생했습니다."
+        cleanup_on_failure
+        ui_echo_error "설정 중 오류가 발생했습니다."
         return 1
       fi
+    else
+      ui_echo_error "$MSG_CANCELED"
     fi
   }
 

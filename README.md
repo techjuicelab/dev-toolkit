@@ -1,4 +1,4 @@
-# 🚀 ZSH 개발 환경 자동화 도구
+# 🚀 ZSH 개발 환경 자동화 도구 v2.0
 
 개발 환경 관리를 위한 자동화된 업데이트 및 초기화 스크립트 모음입니다.
 
@@ -21,6 +21,10 @@
 ├── brew_update.sh         # Homebrew 전체 업데이트
 ├── docker_reset.sh        # Docker 완전 초기화
 ├── devcontainer_setup.sh  # DevContainer 환경 설정 자동화
+├── lib/                   # v2.0 공통 라이브러리 (UI, 설정, 헬퍼)
+│   ├── config.zsh         #   공통 설정 및 상수 정의
+│   ├── ui-framework.zsh   #   통합 UI 프레임워크 (진행률, 박스, 컬러)
+│   └── helpers.zsh        #   공통 유틸리티 함수
 ├── .templates/            # DevContainer 템플릿 파일들 (숨김 폴더)
 │   └── devcontainer/
 │       ├── devcontainer.json
@@ -215,6 +219,15 @@ devcontainer:setup -v
 - **Docker**: 컨테이너 플랫폼 (docker:reset 사용시)
 - **VS Code + Dev Containers 확장**: DevContainer 환경 사용시
 
+## 📋 환경 요구사항
+
+| 항목 | 최소 요구 | 권장 |
+|------|----------|------|
+| macOS | 12.0+ | 14.0+ |
+| Zsh | 5.8+ | 5.9+ |
+| 터미널 | UTF-8, 80x24 | 256색, 120x40 |
+| LANG | UTF-8 인코딩 | ko_KR.UTF-8 |
+
 ## 🛡️ 주의사항
 
 - `docker:reset`은 모든 Docker 데이터를 삭제하므로 신중하게 사용하세요
@@ -223,16 +236,74 @@ devcontainer:setup -v
 - 로그 파일은 자동으로 누적되므로 주기적으로 정리해주세요
 - DevContainer 환경은 VS Code와 Docker가 모두 설치되어 있어야 정상 작동합니다
 
+## 🔧 문제 해결
+
+### asdf:update 실행 시 "asdf가 설치되어 있지 않습니다" 오류
+```bash
+# ASDF 설치 확인
+command -v asdf
+# 설치: https://asdf-vm.com/guide/getting-started.html
+# PATH에 asdf가 포함되어 있는지 확인
+echo $PATH | grep asdf
+```
+
+### brew:update 실행 시 권한 오류
+```bash
+# Homebrew 디렉토리 소유권 수정
+sudo chown -R $(whoami) $(brew --prefix)/*
+```
+
+### docker:reset 실행 시 "Docker가 설치되어 있지 않습니다" 오류
+```bash
+# Docker Desktop이 실행 중인지 확인
+docker ps
+# Docker Desktop 재시작: 메뉴 바에서 Docker 아이콘 → Restart
+```
+
+### 스크립트 실행 후 커서가 보이지 않을 때
+```bash
+# 커서 복원
+printf "\e[?25h"
+# 또는 터미널 리셋
+reset
+```
+
+### 로그 디렉토리 권한 오류
+```bash
+# 로그 디렉토리 권한 확인 및 수정
+ls -la ~/.zsh.d/logs/
+chmod 755 ~/.zsh.d/logs/
+```
+
+### UI가 터미널에서 깨져 보일 때
+```bash
+# UTF-8 인코딩 확인
+echo $LANG  # ko_KR.UTF-8 또는 en_US.UTF-8이어야 함
+# 터미널이 256색을 지원하는지 확인
+echo $TERM  # xterm-256color 권장
+```
+
+### 라이브러리 로드 실패 오류
+```bash
+# lib/ 디렉토리 위치 확인
+ls -la ~/.zsh.d/lib/
+# 또는 프로젝트 디렉토리의 lib/
+ls -la ./lib/
+```
+
 ## 📝 버전 정보
 
-**현재 스크립트 버전:**
-- `asdf:update` - v1.2.0
-- `brew:update` - v1.2.0
-- `devcontainer:setup` - v1.2.0
-- `docker:reset` - v1.3.1
+**현재 스크립트 버전 (v2.0):**
+- `asdf:update` - v2.0.0
+- `brew:update` - v2.0.0
+- `devcontainer:setup` - v2.0.0
+- `docker:reset` - v2.0.0
+- `lib/config.zsh` - v2.0.0
+- `lib/ui-framework.zsh` - v2.0.0
+- `lib/helpers.zsh` - v2.0.0
 
 ---
 
-**개발환경**: macOS + Zsh + Oh My Zsh + Powerlevel10k  
-**작성자**: TechJuiceLab  
-**최종 업데이트**: 2024-09-15
+**개발환경**: macOS + Zsh + Oh My Zsh + Powerlevel10k
+**작성자**: TechJuiceLab
+**최종 업데이트**: 2026-03-21
