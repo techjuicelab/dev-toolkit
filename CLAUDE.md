@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Homebrew**: Formulae, Cask, Mac App Store 앱 통합 업데이트
 - **Docker**: 컨테이너, 이미지, 볼륨, 네트워크 완전 초기화
 - **DevContainer**: VS Code 개발 컨테이너 환경 자동 설정
+- **tmux 세션 관리**: fzf 기반 세션 생성/선택/kill/rename/윈도우 이동
 
 ## 아키텍처 특징
 
@@ -139,6 +140,8 @@ rm ~/.zsh.d/logs/*.log
 - **Homebrew**: `brew:update` 스크립트 실행 시 필요
 - **Docker**: `docker:reset` 스크립트 실행 시 필요
 - **mas**: Mac App Store 업데이트용 (선택사항)
+- **tmux**: tmux 세션 관리 단축 함수 사용 시 필요
+- **fzf**: tmux 단축 함수의 대화형 선택 UI 사용 시 필요
 
 ## 보안 고려사항
 

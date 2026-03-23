@@ -10,6 +10,7 @@
 - **Homebrew** 전체 업데이트
 - **Docker** 완전 초기화
 - **DevContainer** 환경 설정 자동화
+- **tmux 세션 관리** fzf 기반 단축 함수
 
 모든 스크립트는 실시간 진행률 표시, 컬러풀한 UI, 그리고 상세한 로깅 기능을 제공합니다.
 
@@ -21,6 +22,7 @@
 ├── brew_update.sh         # Homebrew 전체 업데이트
 ├── docker_reset.sh        # Docker 완전 초기화
 ├── devcontainer_setup.sh  # DevContainer 환경 설정 자동화
+├── tmux_shortcuts.sh      # tmux 세션 관리 (fzf 연동)
 ├── lib/                   # v2.0 공통 라이브러리 (UI, 설정, 헬퍼)
 │   ├── config.zsh         #   공통 설정 및 상수 정의
 │   ├── ui-framework.zsh   #   통합 UI 프레임워크 (진행률, 박스, 컬러)
@@ -75,7 +77,7 @@ EOF
 source ~/.zshrc
 
 # 함수가 제대로 로드되었는지 확인
-type asdf:update brew:update docker:reset devcontainer:setup
+type asdf:update brew:update docker:reset devcontainer:setup tmuxn tmuxa
 ```
 
 ### 5. 설정 확인 (선택사항)
@@ -196,6 +198,25 @@ devcontainer:setup --help
 1. 프로젝트 루트 디렉토리에서 `devcontainer:setup` 실행
 2. VS Code에서 "Dev Containers: Reopen in Container" 선택
 3. 컨테이너가 빌드되고 모든 설정이 자동으로 적용됨
+
+### tmux 세션 관리
+fzf를 활용한 tmux 세션 관리 단축 함수입니다.
+
+```bash
+tmuxn           # 현재 디렉토리명으로 세션 생성/attach
+tmuxn proj-a    # 'proj-a' 이름으로 세션 생성/attach
+tmuxl           # 세션 목록 출력
+tmuxa           # fzf로 세션 골라서 attach (tmux 안에서는 switch)
+tmuxk           # fzf로 세션 골라서 kill (확인 있음)
+tmuxd           # 현재 세션에서 detach
+tmuxr api-v2    # 현재 세션 이름을 'api-v2'로 변경
+tmuxr           # fzf로 세션 골라서 이름 변경
+tmuxw           # fzf로 모든 세션의 윈도우 선택 후 이동
+```
+
+**의존성:** tmux, fzf
+
+**fzf 미리보기:** 세션 선택 시 해당 세션의 윈도우 목록이 preview로 표시되고, `tmuxw`에서는 선택한 윈도우의 실제 화면 내용이 표시됩니다.
 
 ## 📊 로그 시스템
 

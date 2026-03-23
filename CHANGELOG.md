@@ -4,6 +4,19 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따르며,
 [Semantic Versioning](https://semver.org/lang/ko/)을 준수합니다.
 
+## [2.1.0] - 2026-03-24
+
+### Added
+- tmux 세션 관리 단축 함수 (`tmux_shortcuts.sh`)
+  - `tmuxn` - 세션 생성/attach (기본값: 현재 디렉토리명)
+  - `tmuxl` - 세션 목록 출력
+  - `tmuxa` - fzf로 세션 선택 후 attach (tmux 내부에서는 switch-client)
+  - `tmuxk` - fzf로 세션 선택 후 확인 받고 kill
+  - `tmuxd` - 현재 세션에서 detach
+  - `tmuxr` - 세션 이름 변경 (인자 또는 fzf 선택)
+  - `tmuxw` - fzf로 모든 세션의 윈도우 선택 이동
+- fzf preview에서 세션 내 윈도우 목록 및 윈도우 화면 내용 표시
+
 ## [2.0.0] - 2026-03-21
 
 ### Added
