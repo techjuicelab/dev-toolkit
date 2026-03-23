@@ -1,4 +1,4 @@
-# 🚀 ZSH 개발 환경 자동화 도구 v2.0
+# 🚀 ZSH 개발 환경 자동화 도구 v2.1
 
 개발 환경 관리를 위한 자동화된 업데이트 및 초기화 스크립트 모음입니다.
 
@@ -40,17 +40,13 @@
 
 ## ⚙️ 설치 및 설정
 
-### 1. 디렉토리 설정
+### 1. 저장소 클론
 ```bash
-# ~/.zsh.d 디렉토리 생성 및 이동
-mkdir -p ~/.zsh.d && cd ~/.zsh.d
+git clone git@github.com:techjuicelab/dev-toolkit.git ~/.zsh.d
 ```
 
-### 2. 스크립트 파일 생성
-스크립트 파일들을 생성하거나 복사한 후, 실행 권한을 부여하세요:
-
+### 2. 실행 권한 부여
 ```bash
-# 모든 스크립트에 실행 권한 부여
 chmod +x ~/.zsh.d/*.sh
 ```
 
@@ -260,6 +256,8 @@ tmuxw           # fzf로 모든 세션의 윈도우 선택 후 이동
 - **ASDF**: 버전 매니저 (asdf:update 사용시)
 - **Homebrew**: 패키지 매니저 (brew:update 사용시)
 - **Docker**: 컨테이너 플랫폼 (docker:reset 사용시)
+- **tmux**: 터미널 멀티플렉서 (tmux 세션 관리 사용시)
+- **fzf**: 퍼지 파인더 (tmux 대화형 선택 UI 사용시)
 - **VS Code + Dev Containers 확장**: DevContainer 환경 사용시
 
 ## 📋 환경 요구사항
@@ -371,10 +369,11 @@ cp lib/config.local.zsh.example lib/config.local.zsh
 - `brew:update` - v1.3.0
 - `docker:reset` - v1.3.1
 - `devcontainer:setup` - v1.2.0
-- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.0.0
+- `tmux_shortcuts` - v1.0.0
+- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.1.0
 
 ---
 
 **개발환경**: macOS + Zsh + Oh My Zsh + Powerlevel10k
 **작성자**: TechJuiceLab
-**최종 업데이트**: 2026-03-21
+**최종 업데이트**: 2026-03-24

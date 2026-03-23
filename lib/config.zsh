@@ -5,12 +5,13 @@
 # ─────────────────────────────────────────────────────
 
 # ─── 버전 관리 ──────────────────────────────────────
-DEV_TOOLKIT_VERSION="2.0.0"
+DEV_TOOLKIT_VERSION="2.1.0"
 typeset -A SCRIPT_VERSIONS=(
   [asdf_update]="1.2.0"
   [brew_update]="1.2.0"
   [docker_reset]="1.3.1"
   [devcontainer_setup]="1.2.0"
+  [tmux_shortcuts]="1.0.0"
 )
 
 # ─── 색상 팔레트 (256색 ANSI) ──────────────────────
