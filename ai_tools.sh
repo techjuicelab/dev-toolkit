@@ -24,7 +24,7 @@ _AI_LOADED=0
 
 # ── Claude Code ──
 alias cc="claude --dangerously-skip-permissions"
-alias claude-setup-hooks="bash /Users/techjuice/Documents/dev/ai/hooks/ai-hooks-skills-sample/install.sh"
+alias claude-setup-hooks="bash ${HOME}/.zsh.d/claude_hooks_skills/install.sh"
 
 # ── 1Password 의존성 확인 ──
 function _ai_check_op {
