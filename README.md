@@ -11,6 +11,8 @@
 - **Docker** 완전 초기화
 - **DevContainer** 환경 설정 자동화
 - **tmux 세션 관리** fzf 기반 단축 함수
+- **AI/자동화 도구** 1Password 기반 API 키 관리 + n8n 유틸리티
+- **Claude Code Hooks/Skills** 세션 자동 커밋, 컨텍스트 로드, 이식 가능한 설치 도구
 
 모든 스크립트는 실시간 진행률 표시, 컬러풀한 UI, 그리고 상세한 로깅 기능을 제공합니다.
 
@@ -23,10 +25,22 @@
 ├── docker_reset.sh        # Docker 완전 초기화
 ├── devcontainer_setup.sh  # DevContainer 환경 설정 자동화
 ├── tmux_shortcuts.sh      # tmux 세션 관리 (fzf 연동)
+├── ai_tools.sh            # AI/자동화 도구 (API 키 관리, n8n 유틸리티)
 ├── lib/                   # v2.0 공통 라이브러리 (UI, 설정, 헬퍼)
 │   ├── config.zsh         #   공통 설정 및 상수 정의
 │   ├── ui-framework.zsh   #   통합 UI 프레임워크 (진행률, 박스, 컬러)
 │   └── helpers.zsh        #   공통 유틸리티 함수
+├── .claude/               # Claude Code hooks & skills (이 프로젝트용)
+│   ├── settings.json      #   hook 이벤트 매핑 설정
+│   ├── hooks/
+│   │   ├── commit-session.sh      # 세션 종료 시 자동 WIP 커밋
+│   │   └── load-recent-changes.sh # 세션 시작 시 컨텍스트 로드
+│   └── skills/
+│       └── merge-worktree/
+│           └── SKILL.md           # worktree squash-merge 스킬
+├── claude_hooks_skills/   # 이식 가능한 hooks/skills 라이브러리
+│   ├── install.sh         #   대화형 TUI 설치 스크립트
+│   └── .claude/           #   설치용 hook/skill 템플릿
 ├── .templates/            # DevContainer 템플릿 파일들 (숨김 폴더)
 │   └── devcontainer/
 │       ├── devcontainer.json
@@ -214,6 +228,80 @@ tmuxw           # fzf로 모든 세션의 윈도우 선택 후 이동
 
 **fzf 미리보기:** 세션 선택 시 해당 세션의 윈도우 목록이 preview로 표시되고, `tmuxw`에서는 선택한 윈도우의 실제 화면 내용이 표시됩니다.
 
+### AI/자동화 도구 (`ai_tools.sh`)
+1Password CLI를 통해 AI 서비스 API 키를 안전하게 관리하고, n8n 서버 유틸리티를 제공합니다.
+
+```bash
+# API 키 로드 (Touch ID 인증 필요)
+ai:load
+
+# 로드 상태 확인 (키 값은 마스킹 표시)
+ai:status
+
+# 환경변수 제거
+ai:unload
+
+# n8n 서버 상태 확인
+n8n:health
+
+# n8n 최근 실행 로그 (최근 5건)
+n8n:logs
+```
+
+**지원 서비스**: Z.AI, Google Gemini, Notion (API + 다수 DB), GitHub, Telegram (11개 봇), Naver Search, N2YO, Groq, n8n, PostgreSQL
+
+**의존성**: 1Password CLI v2 (`brew install --cask 1password-cli`)
+
+**편의 Alias:**
+| Alias | 설명 |
+|-------|------|
+| `cc` | `claude --dangerously-skip-permissions` |
+| `claude-setup-hooks` | Claude hooks/skills 설치 스크립트 실행 |
+
+### Claude Code Hooks & Skills
+
+이 프로젝트에는 Claude Code 세션과 연동되는 자동화 hooks와 skills가 포함되어 있습니다.
+
+**Hooks (자동 실행):**
+
+| Hook | 이벤트 | 설명 |
+|------|--------|------|
+| `commit-session.sh` | 세션 종료 (Stop) | 변경사항 자동 스테이지 → Claude로 커밋 메시지 생성 → WIP 커밋 → CHANGELOG 업데이트 |
+| `load-recent-changes.sh` | 세션 시작 (SessionStart) | 최근 CHANGELOG 20줄 + git log 10건을 컨텍스트로 로드 |
+
+**Skills (수동 호출):**
+
+| Skill | 호출 | 설명 |
+|-------|------|------|
+| `merge-worktree` | `/merge-worktree [target]` | worktree 브랜치를 타겟 브랜치로 squash-merge, 구조화된 커밋 메시지 자동 생성 |
+
+### 다른 프로젝트에 Hooks/Skills 설치
+
+`claude_hooks_skills/` 디렉토리의 설치 스크립트를 사용하여 다른 git 프로젝트에 hooks와 skills를 설치할 수 있습니다.
+
+```bash
+# 대상 프로젝트 디렉토리로 이동
+cd ~/my-project
+
+# 설치 스크립트 실행 (대화형 TUI)
+claude-setup-hooks
+# 또는
+bash ~/.zsh.d/claude_hooks_skills/install.sh
+```
+
+**설치 UI 조작법:**
+- `↑/↓` 항목 이동
+- `Space` 선택/해제 토글
+- `a` 전체 선택 / `n` 전체 해제
+- `Enter` 설치 시작
+- `q` 취소
+
+**설치 가능 항목:**
+- Hooks: commit-session, load-recent-changes
+- Skills: merge-worktree, verify-implementation, manage-skills
+
+기존 `.claude/settings.json`이 있으면 자동으로 `.bak` 백업 후 덮어씁니다.
+
 ## 📊 로그 시스템
 
 모든 스크립트는 실행 시 상세한 로그를 생성합니다:
@@ -259,6 +347,8 @@ tmuxw           # fzf로 모든 세션의 윈도우 선택 후 이동
 - **tmux**: 터미널 멀티플렉서 (tmux 세션 관리 사용시)
 - **fzf**: 퍼지 파인더 (tmux 대화형 선택 UI 사용시)
 - **VS Code + Dev Containers 확장**: DevContainer 환경 사용시
+- **1Password CLI** (`op`): AI/자동화 도구 API 키 관리 사용시
+- **Claude Code**: hooks/skills 시스템, `cc` alias 사용시
 
 ## 📋 환경 요구사항
 
@@ -324,6 +414,21 @@ echo $LANG  # ko_KR.UTF-8 또는 en_US.UTF-8이어야 함
 echo $TERM  # xterm-256color 권장
 ```
 
+### ai:load 실행 시 "1Password CLI(op)가 설치되어 있지 않습니다" 오류
+```bash
+# 1Password CLI 설치
+brew install --cask 1password-cli
+# 설치 확인
+op --version
+```
+
+### claude-setup-hooks 실행 시 "git 저장소가 아닙니다" 오류
+```bash
+# 대상 프로젝트 디렉토리에서 실행해야 합니다
+cd ~/my-project
+claude-setup-hooks
+```
+
 ### 라이브러리 로드 실패 오류
 ```bash
 # lib/ 디렉토리 위치 확인
@@ -370,6 +475,8 @@ cp lib/config.local.zsh.example lib/config.local.zsh
 - `docker:reset` - v1.3.1
 - `devcontainer:setup` - v1.2.0
 - `tmux_shortcuts` - v1.0.0
+- `ai_tools` - v1.0.0
+- `claude_hooks_skills` (installer) - v1.0.0
 - `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.1.0
 
 ---

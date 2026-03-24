@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-이 프로젝트는 macOS 개발 환경 관리를 위한 ZSH 자동화 스크립트 모음입니다. 네 가지 핵심 기능을 제공합니다:
+이 프로젝트는 macOS 개발 환경 관리를 위한 ZSH 자동화 스크립트 모음입니다. 핵심 기능:
 
 - **ASDF 버전 매니저**: 플러그인 및 개발 도구 자동 업데이트
 - **Homebrew**: Formulae, Cask, Mac App Store 앱 통합 업데이트
 - **Docker**: 컨테이너, 이미지, 볼륨, 네트워크 완전 초기화
 - **DevContainer**: VS Code 개발 컨테이너 환경 자동 설정
 - **tmux 세션 관리**: fzf 기반 세션 생성/선택/kill/rename/윈도우 이동
+- **AI/자동화 도구**: 1Password 기반 API 키 관리, Claude Code 연동
+- **Claude Code Hooks/Skills**: 세션 자동 커밋, 컨텍스트 로드, worktree 머지 스킬
 
 ## 아키텍처 특징
 
@@ -19,6 +21,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **config.zsh**: 색상 팔레트, 레이아웃 상수, 버전 관리, 로그 설정 통합
 - **ui-framework.zsh**: 화면 제어, 박스 드로잉, 진행률 바, 메시지 출력
 - **helpers.zsh**: 명령어 실행/로깅, 재시도, 타임아웃, 로그 로테이션
+
+### Claude Code 통합 아키텍처
+`.claude/` 디렉토리에 hooks와 skills를 정의하여 Claude Code 세션과 연동합니다:
+- **hooks/commit-session.sh**: Stop 이벤트 시 자동 WIP 커밋 + CHANGELOG 업데이트 (비동기, 120초 타임아웃)
+- **hooks/load-recent-changes.sh**: SessionStart 시 최근 CHANGELOG + git log를 additionalContext로 주입
+- **skills/merge-worktree/SKILL.md**: worktree 브랜치를 squash-merge하며 구조화된 커밋 메시지 생성
+
+### 이식 가능한 Hooks/Skills 라이브러리
+`claude_hooks_skills/` 디렉토리는 다른 프로젝트에 설치할 수 있는 재사용 가능한 라이브러리입니다:
+- **install.sh**: 대화형 TUI 설치 스크립트 (화살표 키 탐색, Space 토글)
+- hooks 2종 + skills 3종 (merge-worktree, verify-implementation, manage-skills) 포함
+- 기존 settings.json 자동 백업 후 덮어쓰기
+
+### AI/자동화 도구 (ai_tools.sh)
+1Password CLI(`op`)를 통한 API 키 관리 및 자동화 유틸리티:
+- **ai:load / ai:unload / ai:status**: 30+ API 키 환경변수 관리
+- **n8n:health / n8n:logs**: n8n 서버 상태 확인 및 실행 로그 조회
+- **Alias**: `cc` (Claude Code skip-permissions), `claude-setup-hooks` (설치 스크립트)
 
 ### 주요 특징
 - **진행률 표시**: 실시간 진행 바와 단계별 가중치 기반 진행 상황
@@ -64,6 +84,30 @@ asdf:update --help
 brew:update --help
 docker:reset --help
 devcontainer:setup --help
+```
+
+### AI/자동화 도구
+```bash
+# API 키 로드 (1Password Touch ID 인증 필요)
+ai:load
+
+# 로드 상태 확인 (마스킹된 키 표시)
+ai:status
+
+# API 키 환경변수 제거
+ai:unload
+
+# n8n 서버 상태 확인
+n8n:health
+
+# n8n 최근 실행 로그 (최근 5건)
+n8n:logs
+
+# Claude Code (skip-permissions 모드)
+cc
+
+# 다른 프로젝트에 Claude hooks/skills 설치
+claude-setup-hooks
 ```
 
 ### 테스트 실행
@@ -133,6 +177,14 @@ rm ~/.zsh.d/logs/*.log
 - 개인 설정은 `lib/config.local.zsh`에 오버라이드 (git 미추적)
 - 새 COLOR_* 변수 추가 시 config.zsh에 정의
 
+### Claude Code Hooks/Skills 수정
+- `.claude/hooks/` 수정 시 `claude_hooks_skills/.claude/hooks/`도 동기화 필요
+- hook 스크립트는 bash 호환 (zsh 아님) — `#!/usr/bin/env bash` 유지
+- hook의 JSON 출력은 `{"additionalContext": "..."}` 형식 준수
+- skills의 SKILL.md는 Claude Code frontmatter 형식 유지 (`name`, `description`, `argument-hint`)
+- `install.sh`의 `NAMES`, `TYPES`, `DESCS` 배열에 새 항목 추가 시 3개 배열 모두 동기화
+- worktree 환경에서 정상 동작 확인 (`git rev-parse --show-toplevel` 사용)
+
 ## 의존성 요구사항
 
 - **Zsh**: 배열 인덱싱이 1-based임에 주의
@@ -142,6 +194,8 @@ rm ~/.zsh.d/logs/*.log
 - **mas**: Mac App Store 업데이트용 (선택사항)
 - **tmux**: tmux 세션 관리 단축 함수 사용 시 필요
 - **fzf**: tmux 단축 함수의 대화형 선택 UI 사용 시 필요
+- **1Password CLI** (`op`): ai:load/ai:unload/ai:status 사용 시 필요
+- **Claude Code**: hooks/skills 시스템, `cc` alias 사용 시 필요
 
 ## 보안 고려사항
 
@@ -158,6 +212,17 @@ rm ~/.zsh.d/logs/*.log
 - init-firewall.sh는 아웃바운드 네트워크를 허용 목록 기반으로 제한합니다
 - iptables 규칙 변경 전 자동 백업이 수행됩니다
 - 원격 스크립트는 다운로드 후 실행 방식을 사용합니다
+
+### AI/자동화 도구 보안
+- API 키는 1Password Vault "AI Automation"에서 런타임 로드 (파일 저장 없음)
+- `ai:status`는 키 값을 마스킹 표시 (처음 4자리 + 마지막 4자리)
+- `ai:unload`로 세션 종료 시 환경변수 완전 제거
+- `_AI_VAULT`, `_AI_LOADED` 변수는 내부용이며 readonly 아님 (re-source 호환)
+
+### Claude Code Hooks 보안
+- commit-session.sh는 `--no-verify`로 커밋 (hook 무한 루프 방지용)
+- 모든 hook 스크립트는 `set -euo pipefail` 적용
+- 오류 출력은 `2>/dev/null`로 리다이렉트하여 안전하게 실패
 
 ## 테스트 시나리오
 
