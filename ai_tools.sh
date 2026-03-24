@@ -19,7 +19,7 @@
 # 시크릿 관리: 1Password Vault "AI Automation"
 
 # ── 내부 상수 ──
-readonly _AI_VAULT="AI Automation"
+_AI_VAULT="AI Automation"
 _AI_LOADED=0
 
 # ── Claude Code ──
