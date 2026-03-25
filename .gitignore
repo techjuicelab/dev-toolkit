@@ -1,5 +1,6 @@
 # Claude configuration
 .claude/
+!claude_hooks_skills/.claude/
 
 # ASDF version manager
 .tool-versions
