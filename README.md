@@ -470,14 +470,14 @@ cp lib/config.local.zsh.example lib/config.local.zsh
 ## 📝 버전 정보
 
 **현재 스크립트 버전:**
-- `asdf:update` - v1.4.0
+- `asdf:update` - v1.4.1
 - `brew:update` - v1.3.0
 - `docker:reset` - v1.3.1
 - `devcontainer:setup` - v1.2.0
 - `tmux_shortcuts` - v1.0.0
 - `ai_tools` - v1.0.0
 - `claude_hooks_skills` (installer) - v1.0.0
-- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.1.1
+- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.1.2
 
 ---
 
