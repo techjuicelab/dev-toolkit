@@ -12,7 +12,7 @@
 - **DevContainer** 환경 설정 자동화
 - **tmux 세션 관리** fzf 기반 단축 함수
 - **AI/자동화 도구** 1Password 기반 API 키 관리 + n8n 유틸리티
-- **Claude Code Hooks/Skills** 세션 자동 커밋, 컨텍스트 로드, 이식 가능한 설치 도구
+- **Claude Code 플러그인 마켓플레이스** worktree 머지, 시크릿 차단(1Password), asdf/devcontainer 닥터
 
 모든 스크립트는 실시간 진행률 표시, 컬러풀한 UI, 그리고 상세한 로깅 기능을 제공합니다.
 
@@ -30,17 +30,12 @@
 │   ├── config.zsh         #   공통 설정 및 상수 정의
 │   ├── ui-framework.zsh   #   통합 UI 프레임워크 (진행률, 박스, 컬러)
 │   └── helpers.zsh        #   공통 유틸리티 함수
-├── .claude/               # Claude Code hooks & skills (이 프로젝트용)
-│   ├── settings.json      #   hook 이벤트 매핑 설정
-│   ├── hooks/
-│   │   ├── commit-session.sh      # 세션 종료 시 자동 WIP 커밋
-│   │   └── load-recent-changes.sh # 세션 시작 시 컨텍스트 로드
-│   └── skills/
-│       └── merge-worktree/
-│           └── SKILL.md           # worktree squash-merge 스킬
-├── claude_hooks_skills/   # 이식 가능한 hooks/skills 라이브러리
-│   ├── install.sh         #   대화형 TUI 설치 스크립트
-│   └── .claude/           #   설치용 hook/skill 템플릿
+├── .claude-plugin/        # Claude Code 플러그인 마켓플레이스 카탈로그
+│   └── marketplace.json
+├── plugins/                # 배포 플러그인 (claude plugin install)
+│   ├── git-worktree/       #   worktree squash-merge 스킬
+│   ├── secret-guard/       #   시크릿 차단 훅 + op-secrets(1Password) 스킬
+│   └── toolchain-doctor/   #   asdf-doctor 에이전트 + devcontainer-parity 스킬
 ├── .templates/            # DevContainer 템플릿 파일들 (숨김 폴더)
 │   └── devcontainer/
 │       ├── devcontainer.json
@@ -262,51 +257,44 @@ n8n:logs
 | Alias | 설명 |
 |-------|------|
 | `cc` | `claude --dangerously-skip-permissions` |
-| `claude-setup-hooks` | Claude hooks/skills 설치 스크립트 실행 |
 
-### Claude Code Hooks & Skills
+### Claude Code 플러그인 (마켓플레이스)
 
-이 프로젝트에는 Claude Code 세션과 연동되는 자동화 hooks와 skills가 포함되어 있습니다.
+이 저장소는 **Claude Code 플러그인 마켓플레이스**입니다. (옛 `claude_hooks_skills/` bash 설치기 + 자동커밋 훅은 폐기되고 네이티브 플러그인 시스템으로 대체되었습니다 — 효용 평가 후 `merge-worktree`만 유지하고 나머지는 드롭, 보안/툴체인 플러그인을 신규 추가.)
 
-**Hooks (자동 실행):**
+**제공 플러그인:**
 
-| Hook | 이벤트 | 설명 |
-|------|--------|------|
-| `commit-session.sh` | 세션 종료 (Stop) | 변경사항 자동 스테이지 → Claude로 커밋 메시지 생성 → WIP 커밋 → CHANGELOG 업데이트 |
-| `load-recent-changes.sh` | 세션 시작 (SessionStart) | 최근 CHANGELOG 20줄 + git log 10건을 컨텍스트로 로드 |
+| 플러그인 | 구성 | 설명 |
+|---|---|---|
+| `git-worktree` | skill `merge-worktree` | worktree 브랜치를 타깃으로 squash-merge (`--pr` 옵션). 충돌 시 중단, force-push/hook-skip 안 함 |
+| `secret-guard` | PreToolUse hook + skill `op-secrets` | 평문 시크릿(`sk-`/`ghp_`/`AKIA`/private key 등) 쓰기·커밋을 **차단**하고 1Password(`op://`) 워크플로로 유도 |
+| `toolchain-doctor` | agent `asdf-doctor` + skill `devcontainer-parity` | `.tool-versions` 드리프트 진단 + devcontainer↔호스트 정합성 점검 |
 
-**Skills (수동 호출):**
-
-| Skill | 호출 | 설명 |
-|-------|------|------|
-| `merge-worktree` | `/merge-worktree [target]` | worktree 브랜치를 타겟 브랜치로 squash-merge, 구조화된 커밋 메시지 자동 생성 |
-
-### 다른 프로젝트에 Hooks/Skills 설치
-
-`claude_hooks_skills/` 디렉토리의 설치 스크립트를 사용하여 다른 git 프로젝트에 hooks와 skills를 설치할 수 있습니다.
+**내 Claude Code에 적용 (설치):**
 
 ```bash
-# 대상 프로젝트 디렉토리로 이동
-cd ~/my-project
+# 1) 이 저장소를 마켓플레이스로 추가
+claude plugin marketplace add techjuicelab/dev-toolkit
+#    (로컬 클론에서 바로: claude plugin marketplace add ~/.zsh.d)
 
-# 설치 스크립트 실행 (대화형 TUI)
-claude-setup-hooks
-# 또는
-bash ~/.zsh.d/claude_hooks_skills/install.sh
+# 2) 원하는 플러그인 설치
+claude plugin install secret-guard@dev-toolkit
+claude plugin install git-worktree@dev-toolkit
+claude plugin install toolchain-doctor@dev-toolkit
 ```
 
-**설치 UI 조작법:**
-- `↑/↓` 항목 이동
-- `Space` 선택/해제 토글
-- `a` 전체 선택 / `n` 전체 해제
-- `Enter` 설치 시작
-- `q` 취소
+또는 세션 안에서 `/plugin` → marketplace 추가 → 설치.
 
-**설치 가능 항목:**
-- Hooks: commit-session, load-recent-changes
-- Skills: merge-worktree, verify-implementation, manage-skills
+**사용법:**
+- **`secret-guard`** — 설치만 하면 자동 동작(시크릿 쓰기/커밋 시도 시 차단). `op-secrets` 스킬은 환경변수·`.env`·시크릿 작업 시 자동 로드.
+- **`git-worktree`** — worktree 안에서 `/git-worktree:merge-worktree [target] [--pr]` 수동 호출.
+- **`toolchain-doctor`** — "이 프로젝트 asdf 점검해줘" → `asdf-doctor` 서브에이전트 / "devcontainer가 호스트랑 맞는지 봐줘" → `devcontainer-parity` 스킬.
 
-기존 `.claude/settings.json`이 있으면 자동으로 `.bak` 백업 후 덮어씁니다.
+**업데이트 / 제거:**
+```bash
+claude plugin update <name>@dev-toolkit
+claude plugin uninstall <name>@dev-toolkit
+```
 
 ## 📊 로그 시스템
 
@@ -428,13 +416,6 @@ brew install --cask 1password-cli
 op --version
 ```
 
-### claude-setup-hooks 실행 시 "git 저장소가 아닙니다" 오류
-```bash
-# 대상 프로젝트 디렉토리에서 실행해야 합니다
-cd ~/my-project
-claude-setup-hooks
-```
-
 ### 라이브러리 로드 실패 오류
 ```bash
 # lib/ 디렉토리 위치 확인
@@ -482,8 +463,8 @@ cp lib/config.local.zsh.example lib/config.local.zsh
 - `devcontainer:setup` - v1.2.0
 - `tmux_shortcuts` - v1.0.0
 - `ai_tools` - v1.0.0
-- `claude_hooks_skills` (installer) - v1.0.0
-- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.1.2
+- Claude 플러그인: `git-worktree`·`secret-guard`·`toolchain-doctor` - v0.1.0
+- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.2.0
 
 ---
 

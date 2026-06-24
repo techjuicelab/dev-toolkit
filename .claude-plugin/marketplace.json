@@ -1,0 +1,25 @@
+{
+  "name": "dev-toolkit",
+  "owner": {
+    "name": "TechJuiceLab",
+    "email": "techjuicelab@gmail.com"
+  },
+  "description": "TechJuiceLab's personal Claude Code plugins: git worktree squash-merge, secret enforcement + 1Password workflow, and asdf/devcontainer toolchain doctor.",
+  "plugins": [
+    {
+      "name": "git-worktree",
+      "source": "./plugins/git-worktree",
+      "description": "Squash-merge the current git worktree branch back into its target with a researched Conventional-Commits message. Stops on conflict, never force-pushes, never skips hooks."
+    },
+    {
+      "name": "secret-guard",
+      "source": "./plugins/secret-guard",
+      "description": "Blocks plaintext secrets at write/commit/push time (PreToolUse hook) and ships a 1Password (op://) workflow skill so Claude references secrets correctly instead of hardcoding them."
+    },
+    {
+      "name": "toolchain-doctor",
+      "source": "./plugins/toolchain-doctor",
+      "description": "Diagnoses asdf .tool-versions drift vs installed runtimes (asdf-doctor subagent) and devcontainer-vs-host parity (devcontainer-parity skill)."
+    }
+  ]
+}

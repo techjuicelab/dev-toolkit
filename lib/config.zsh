@@ -5,7 +5,7 @@
 # ─────────────────────────────────────────────────────
 
 # ─── 버전 관리 ──────────────────────────────────────
-DEV_TOOLKIT_VERSION="2.1.2"
+DEV_TOOLKIT_VERSION="2.2.0"
 typeset -gA SCRIPT_VERSIONS=(
   [asdf_update]="1.4.1"
   [brew_update]="1.3.0"

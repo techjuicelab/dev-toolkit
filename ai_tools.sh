@@ -24,7 +24,9 @@ _AI_LOADED=0
 
 # ── Claude Code ──
 alias cc="claude --dangerously-skip-permissions"
-alias claude-setup-hooks="bash ${HOME}/.zsh.d/claude_hooks_skills/install.sh"
+# Claude hooks/skills는 이제 플러그인 마켓플레이스로 제공됩니다:
+#   claude plugin marketplace add techjuicelab/dev-toolkit
+#   claude plugin install secret-guard@dev-toolkit  (등)
 
 # ── 1Password 의존성 확인 ──
 function _ai_check_op {
