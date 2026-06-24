@@ -9,6 +9,9 @@
 ### Fixed
 - **asdf:update** asdf 0.19.0 라이브 검증에서 발견: 버전 미설정 플러그인의 `asdf current` 출력이 `______`(언더스코어 placeholder)로 나와 스킵 가드(`-z`/`system`/`Version`)에 걸리지 않던 문제. 가드에 `=~ ^_+$`를 추가하여 본래 의도대로 "버전 미설정 플러그인은 건너뜀"을 복원 (미설정 플러그인에 최신 버전이 자동 설치·전역 고정되던 것을 방지)
 
+### Documentation
+- README 및 생성 README 현행화: devcontainer의 `~/.claude` 복사 방식이 "전체 복사"가 아니라 "안전 항목 화이트리스트 복사 + `.gitignore`"임을 반영, 과장된 "SuperClaude Framework 완전 통합" 문구 정정, Node.js 20 → 22, `asdf:update`에 asdf 0.19.0(Go) 사용법(`set --home`·`______` 미설정 스킵·shims PATH) 명시
+
 ## [2.1.1] - 2026-06-24
 
 ### Fixed

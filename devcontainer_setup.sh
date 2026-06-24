@@ -238,9 +238,9 @@ EOF
 
 ## 포함된 설정
 
-### 🧠 SuperClaude Framework
-- 완전한 Claude Code 확장 시스템
-- 모든 persona, command, MCP 서버 설정 포함
+### 🧠 Claude Code 개인 설정
+- skills/commands/agents/settings.json 등 안전 항목만 복사 (민감 파일 제외)
+- `.devcontainer/.gitignore`로 자격증명·세션 유출 방지
 
 ### 🎨 Shell 환경
 - Oh My Zsh + powerlevel10k 테마
@@ -261,7 +261,7 @@ EOF
 1. VS Code에서 "Dev Containers: Reopen in Container" 실행
 2. 컨테이너가 빌드되고 모든 설정이 자동으로 적용됩니다
 3. 터미널이 zsh + powerlevel10k로 설정됩니다
-4. Claude Code가 SuperClaude 프레임워크와 함께 사용 가능합니다
+4. Claude Code가 개인 설정(skills/commands/agents 등)과 함께 사용 가능합니다
 
 ## 생성 정보
 

@@ -124,6 +124,11 @@ asdf:update --help
 - 실시간 진행률 표시
 - 상세한 로그 기록
 
+> **asdf 0.19.0 (Go 재작성판) 호환** — 전역 버전은 `asdf set --home`으로 `~/.tool-versions`에 기록하고,
+> `asdf current`의 헤더+4컬럼 출력 파싱과 버전 미설정(`______`) 플러그인 자동 스킵을 지원합니다.
+> asdf 본체는 `brew upgrade asdf`로 먼저 업데이트하세요. (예전 `asdf.sh` source 방식이 아니라
+> `~/.zshrc`에서 `$HOME/.asdf/shims`를 PATH에 추가하는 방식)
+
 ### Homebrew 업데이트 (`brew:update`)
 Homebrew Formulae, Cask, Mac App Store 앱을 한번에 업데이트합니다.
 
@@ -186,19 +191,20 @@ devcontainer:setup --help
 ```
 
 **기능:**
-- SuperClaude Framework (Claude Code 확장 시스템) 완전 통합
+- Claude Code 개인 설정 통합 (`skills`/`commands`/`agents`/`settings.json` 등 — 자격증명·세션 기록 같은 민감 파일은 제외하고 복사)
 - Oh My Zsh + Powerlevel10k 테마 자동 설정
 - 필수 플러그인: git, zsh-syntax-highlighting, zsh-autosuggestions, fzf
 - ccstatusline: Claude Code 상태 모니터링 시스템
 - 네트워크 보안 설정 (allowlist 기반 방화벽)
-- Node.js 20 + bun 패키지 매니저 환경
+- Node.js 22 + bun 패키지 매니저 환경
 - 개인화된 설정 자동 적용 (Claude, Powerlevel10k 등)
+- 🔒 보안: `~/.claude`는 **안전 항목만 화이트리스트 복사**하고 `.devcontainer/.gitignore`를 자동 생성하여, 자격증명/세션 기록이 git에 커밋되는 것을 방지
 
 **포함된 설정:**
 - `.devcontainer/devcontainer.json` - VS Code DevContainer 설정
 - `.devcontainer/Dockerfile` - 컨테이너 이미지 빌드 파일
 - `.devcontainer/init-firewall.sh` - 네트워크 보안 초기화
-- `.devcontainer/.claude/` - 완전한 SuperClaude 프레임워크
+- `.devcontainer/.claude/` - Claude Code 설정 (안전 항목만 복사: skills/commands/agents/settings.json 등)
 - `.devcontainer/.p10k.zsh` - Powerlevel10k 개인화 설정
 - `.devcontainer/ccstatusline/` - Claude Code 상태 모니터링
 - `.devcontainer/docker-zshrc` - 컨테이너용 zsh 설정
