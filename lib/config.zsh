@@ -5,9 +5,9 @@
 # ─────────────────────────────────────────────────────
 
 # ─── 버전 관리 ──────────────────────────────────────
-DEV_TOOLKIT_VERSION="2.1.1"
+DEV_TOOLKIT_VERSION="2.1.2"
 typeset -gA SCRIPT_VERSIONS=(
-  [asdf_update]="1.4.0"
+  [asdf_update]="1.4.1"
   [brew_update]="1.3.0"
   [docker_reset]="1.3.1"
   [devcontainer_setup]="1.2.0"

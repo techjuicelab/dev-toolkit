@@ -7,7 +7,7 @@
 # ──────────────────────────────────────────────────────────
 asdf:update() {
   # 스크립트 버전 정보
-  local VERSION="1.4.0" # 병렬 버전 조회 추가
+  local VERSION="1.4.1" # asdf 0.19.0 미설정 버전(______) 스킵 가드 추가
 
   # --version 또는 -v 플래그가 입력되면 버전 정보 출력 후 종료
   if [[ "$1" == "--version" || "$1" == "-v" ]]; then
@@ -130,7 +130,8 @@ EOF
 
     local current_version; current_version=$(asdf current "$plugin" 2>/dev/null | awk -v p="$plugin" '$1==p {print $2}')
 
-    if [[ -z "$current_version" || "$current_version" == "system" || "$current_version" == "Version" ]]; then
+    # asdf 0.19.0(Go)은 버전 미설정을 '______'(언더스코어)로 표기 → 스킵 대상
+    if [[ -z "$current_version" || "$current_version" == "system" || "$current_version" == "Version" || "$current_version" =~ ^_+$ ]]; then
       ui_echo_warn "  - '$plugin'에 설정된 버전이 없거나 잘못되었습니다. 건너뜁니다."
     else
       local latest_version=""
