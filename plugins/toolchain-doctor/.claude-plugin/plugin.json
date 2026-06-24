@@ -1,0 +1,11 @@
+{
+  "name": "toolchain-doctor",
+  "version": "0.1.0",
+  "description": "Diagnoses asdf .tool-versions drift vs installed runtimes (asdf-doctor subagent) and devcontainer-vs-host parity (devcontainer-parity skill).",
+  "author": {
+    "name": "TechJuiceLab",
+    "email": "techjuicelab@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["asdf", "tool-versions", "devcontainer", "node", "python", "toolchain"]
+}

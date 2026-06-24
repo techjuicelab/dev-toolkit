@@ -4,6 +4,25 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따르며,
 [Semantic Versioning](https://semver.org/lang/ko/)을 준수합니다.
 
+## [2.2.0] - 2026-06-24
+
+### Added
+- **Claude Code 플러그인 마켓플레이스** (`.claude-plugin/marketplace.json` + `plugins/`):
+  - `git-worktree` — worktree 브랜치를 squash-merge하는 `merge-worktree` 스킬 (`--pr` 옵션, ahead/충돌 가드)
+  - `secret-guard` — 평문 시크릿(sk-/ghp_/AKIA/AIza/private key 등)을 PreToolUse 단계에서 **차단**하는 훅 + 1Password(`op://`) 워크플로 `op-secrets` 스킬
+  - `toolchain-doctor` — `.tool-versions` 드리프트 진단 `asdf-doctor` 서브에이전트 + devcontainer↔호스트 정합성 `devcontainer-parity` 스킬
+- 설치: `claude plugin marketplace add techjuicelab/dev-toolkit` → `claude plugin install <name>@dev-toolkit`
+
+### Removed
+- 옛 `claude_hooks_skills/` (bash TUI 설치기, `install.sh`)와 폐기 판정된 훅/스킬 제거:
+  - `commit-session.sh` (매 Stop마다 `git add -A`+`--no-verify` 자동커밋 — 시크릿 유출/히스토리 범람 위험) → `secret-guard` + 수동 커밋으로 대체
+  - `load-recent-changes.sh` (온디맨드 git 접근과 중복, 컨텍스트 낭비)
+  - `verify-implementation` / `manage-skills` (빈 레지스트리, 공식 `skill-creator`와 중복)
+- 깨진 `claude-setup-hooks` alias 제거
+
+### Changed
+- `merge-worktree` 스킬: 하드코딩된 `Co-Authored-By: Claude Opus 4.6` 제거, ahead-guard·PR 흐름·target-checkout 가드 추가, 플러그인으로 이전
+
 ## [2.1.2] - 2026-06-24
 
 ### Fixed

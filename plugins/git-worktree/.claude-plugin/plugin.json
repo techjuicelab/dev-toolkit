@@ -1,0 +1,11 @@
+{
+  "name": "git-worktree",
+  "version": "0.1.0",
+  "description": "Squash-merge the current git worktree branch back into its target branch with a researched Conventional-Commits message.",
+  "author": {
+    "name": "TechJuiceLab",
+    "email": "techjuicelab@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["git", "worktree", "merge", "squash", "conventional-commits"]
+}
