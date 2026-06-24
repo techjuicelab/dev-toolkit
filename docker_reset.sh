@@ -10,6 +10,7 @@ docker:reset() {
 
   # ─── 공유 라이브러리 로드 ────────────
   local lib_dir="${0:A:h}/lib"
+  if [[ ! -d "$lib_dir" ]]; then lib_dir="${HOME}/.zsh.d/lib"; fi
   source "${lib_dir}/ui-framework.zsh" || { echo "ERROR: ui-framework.zsh 로드 실패"; return 1; }
   source "${lib_dir}/helpers.zsh" || { echo "ERROR: helpers.zsh 로드 실패"; return 1; }
 
@@ -47,7 +48,7 @@ EOF
   # ─── 강화된 삭제 작업 (재시도 + 에러 처리) ──────────────────
   delete_with_progress() {
     local -a ids failed_ids
-    local cmd=$2
+    local -a cmd; cmd=(${(z)2})
     local act=$3
     local max_retries=3
 
@@ -63,7 +64,7 @@ EOF
 
     # 첫 번째 시도
     for ((i=1; i<=total; i++)); do
-      if ! ui_log_cmd $cmd "${ids[i]}"; then
+      if ! ui_log_cmd "${cmd[@]}" "${ids[i]}"; then
         failed_ids+=("${ids[i]}")
         ui_echo_warn "    - ${ids[i]} 삭제 실패, 재시도 예정"
       fi
@@ -78,7 +79,7 @@ EOF
         local temp_failed=()
         for failed_id in "${failed_ids[@]}"; do
           sleep 0.5  # Docker daemon 안정화 대기
-          if ! ui_log_cmd $cmd "$failed_id"; then
+          if ! ui_log_cmd "${cmd[@]}" "$failed_id"; then
             temp_failed+=("$failed_id")
           else
             ui_echo_info "    - $failed_id 재시도 성공 ✅"

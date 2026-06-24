@@ -98,9 +98,9 @@ EOF
     done < <(brew list --cask --versions)
 
     while IFS= read -r line; do
+      [[ "$line" == *'!= '* ]] || continue
       local name=${line%% *}
-      local rest=${line#* }
-      local newest=${rest#*< }
+      local newest=${line##*!= }
       latest_versions[$name]=$newest
     done < <(brew outdated --cask --verbose)
 

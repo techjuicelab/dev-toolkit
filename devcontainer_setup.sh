@@ -11,6 +11,7 @@ devcontainer:setup() {
 
   # 공유 라이브러리 로드
   local LIB_DIR="${0:A:h}/lib"
+  if [[ ! -d "$LIB_DIR" ]]; then LIB_DIR="${HOME}/.zsh.d/lib"; fi
   source "${LIB_DIR}/ui-framework.zsh" || { echo "ERROR: ui-framework.zsh 로드 실패"; return 1; }
   source "${LIB_DIR}/helpers.zsh" || { echo "ERROR: helpers.zsh 로드 실패"; return 1; }
 
@@ -97,10 +98,18 @@ EOF
   copy_personal_settings() {
     ui_echo_info "▶️ 개인화 설정 복사"
 
-    # Claude 설정 복사
+    # Claude 설정 복사 (민감 항목 제외, 허용 목록만 복사)
+    # ⚠️ ~/.claude 전체를 복사하면 .credentials.json·세션 기록·shell-snapshots 등이
+    #    프로젝트로 새어나갈 수 있으므로, 안전한 항목만 명시적으로 복사한다.
     ui_echo_info "  - Claude 설정 복사 중..."
-    cp -r "$CLAUDE_SOURCE_DIR" "$TARGET_DIR/.claude"
-    ui_echo_success "    - Claude 설정 복사 완료"
+    mkdir -p "$TARGET_DIR/.claude"
+    for item in skills commands agents plugins output-styles settings.json CLAUDE.md; do
+      if [[ -e "$CLAUDE_SOURCE_DIR/$item" ]]; then
+        cp -r "$CLAUDE_SOURCE_DIR/$item" "$TARGET_DIR/.claude/$item"
+        ui_echo_info "    - $item 복사됨"
+      fi
+    done
+    ui_echo_success "    - Claude 설정 복사 완료 (민감 파일 제외)"
 
     # ccstatusline 설정 복사 (있는 경우에만)
     if [[ -d "$CCSTATUSLINE_SOURCE_DIR" ]]; then
@@ -119,6 +128,16 @@ EOF
     else
       ui_echo_warn "    - .p10k.zsh 파일을 찾을 수 없습니다. 건너뜁니다."
     fi
+
+    # 민감 정보 포함 가능 — git 추적 방지 (.devcontainer 커밋 시 유출 방어)
+    cat > "$TARGET_DIR/.gitignore" << 'EOF'
+# 개인화 복사본 — 자격증명/세션 포함 가능, 커밋 금지
+.claude/
+ccstatusline/
+.p10k.zsh
+docker-zshrc
+EOF
+    ui_echo_success "    - .gitignore 생성 완료"
 
     ui_echo_success "  - 개인화 설정 복사 완료"
   }
@@ -233,7 +252,7 @@ EOF
 - 실시간 토큰 사용량, 컨텍스트 사용률 추적
 
 ### 🛠️ 개발 도구
-- Node.js 20 런타임
+- Node.js 22 런타임
 - bun 패키지 매니저
 - 네트워크 보안 설정 (allowlist 기반)
 
@@ -247,7 +266,7 @@ EOF
 ## 생성 정보
 
 - 생성 시간: $(date '+%Y-%m-%d %H:%M:%S')
-- 생성 도구: devcontainer:setup v1.0.0
+- 생성 도구: devcontainer:setup v1.2.0
 - 소스 설정: 현재 Mac 환경 (~/.claude, ~/.p10k.zsh, ~/.config/ccstatusline)
 EOF
 

@@ -71,7 +71,7 @@ EOF
   ui_echo_warn "asdf '자체'는 먼저 수동으로 업데이트해주세요. (예: brew upgrade asdf)"
   ui_move_to_line $UI_CURRENT_MESSAGE_LINE
   printf "asdf 자체 업데이트를 완료하셨습니까? (Y/n): "
-  read ans
+  read -r ans
 
   if [[ "$ans" =~ ^[nN]$ ]]; then
     ui_echo_error "스크립트를 종료합니다. asdf를 먼저 업데이트해주세요."
@@ -128,7 +128,7 @@ EOF
     ui_set_current_step $plugin_index
     ui_echo_info "▶️ '${plugin}' 확인 중..."
 
-    local current_version; current_version=$(asdf current "$plugin" 2>/dev/null | awk '{print $2}')
+    local current_version; current_version=$(asdf current "$plugin" 2>/dev/null | awk -v p="$plugin" '$1==p {print $2}')
 
     if [[ -z "$current_version" || "$current_version" == "system" || "$current_version" == "Version" ]]; then
       ui_echo_warn "  - '$plugin'에 설정된 버전이 없거나 잘못되었습니다. 건너뜁니다."
@@ -146,7 +146,7 @@ EOF
         ui_echo_info "  - 설치를 시작합니다... (자세한 내용은 로그 파일 참조)"
         if helpers_run_and_log "$log_file" asdf install "$plugin" "$latest_version"; then
           ui_echo_info "  - 버전을 설정합니다..."
-          if helpers_run_and_log "$log_file" asdf set "$plugin" "$latest_version"; then
+          if helpers_run_and_log "$log_file" asdf set --home "$plugin" "$latest_version"; then
             ui_echo_success "  - '$plugin'이(가) ${latest_version} 버전으로 업데이트되었습니다."
           else
             ui_echo_error "  - '$plugin' v${latest_version} 설정에 실패했습니다."

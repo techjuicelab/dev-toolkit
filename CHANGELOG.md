@@ -4,6 +4,25 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따르며,
 [Semantic Versioning](https://semver.org/lang/ko/)을 준수합니다.
 
+## [2.1.1] - 2026-06-24
+
+### Fixed
+- **asdf:update** asdf 0.19.0(Go 재작성) 호환:
+  - `asdf set` → `asdf set --home` 로 전역 `~/.tool-versions`에 기록 (현재 디렉터리 오염 방지)
+  - `asdf current` 파싱을 헤더 + 4컬럼 출력에 대응 (`awk '$1==plugin {print $2}'`) — 매 실행마다 전체 재설치되던 문제 해결
+- **docker:reset** `"docker stop"` 등 다단어 명령이 단일 토큰으로 전달되어 모든 개별 삭제가 실패(exit 127)하던 버그 수정 (`cmd` 배열화 + `"${cmd[@]}"`)
+- **brew:update** cask 최신 버전 파싱이 존재하지 않는 `< ` 토큰을 잘라 쓰레기 값을 표시하던 문제 수정 (`!= ` 구분자 기준)
+- **docker_reset.sh / devcontainer_setup.sh** `~/.zsh.d/lib` 폴백 누락으로 다른 디렉터리에서 실행 시 로드 실패하던 문제 수정
+- **lib/config.zsh** `EMOJI` / `SCRIPT_VERSIONS`를 `typeset -gA`로 선언 (함수 내 source 시 전역에 노출되지 않던 스코프 버그)
+- 대화형 `read` → `read -r` (asdf_update, ui-framework, tmux_shortcuts)
+
+### Security
+- **devcontainer:setup** `~/.claude` 전체 복사 → 안전 항목 화이트리스트 복사로 변경하여 `.credentials.json`·세션 기록·shell-snapshots 유출 방지, `.devcontainer/.gitignore` 자동 생성
+
+### Changed
+- DevContainer 베이스 이미지 `node:20` → `node:22` (node:20 EOL 2026-04-30)
+- `SCRIPT_VERSIONS` 맵을 실제 스크립트 버전과 동기화 (asdf 1.4.0, brew 1.3.0)
+
 ## [2.1.0] - 2026-03-24
 
 ### Added

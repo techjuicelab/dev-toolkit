@@ -5,10 +5,10 @@
 # ─────────────────────────────────────────────────────
 
 # ─── 버전 관리 ──────────────────────────────────────
-DEV_TOOLKIT_VERSION="2.1.0"
-typeset -A SCRIPT_VERSIONS=(
-  [asdf_update]="1.2.0"
-  [brew_update]="1.2.0"
+DEV_TOOLKIT_VERSION="2.1.1"
+typeset -gA SCRIPT_VERSIONS=(
+  [asdf_update]="1.4.0"
+  [brew_update]="1.3.0"
   [docker_reset]="1.3.1"
   [devcontainer_setup]="1.2.0"
   [tmux_shortcuts]="1.0.0"
@@ -43,7 +43,7 @@ PROGRESS_BAR_LINE=25
 BOX_WIDTH=52
 
 # ─── 이모지 매핑 ───────────────────────────────────
-typeset -A EMOJI=(
+typeset -gA EMOJI=(
   [asdf]="🔄"
   [homebrew]="🍺"
   [docker]="🐳"
@@ -73,7 +73,7 @@ RETRY_DELAY_SECONDS=1
 
 # ─── 사용자 설정 오버라이드 ────────────────────────
 # config.local.zsh가 있으면 로드 (개인 설정)
-local config_local="${0:A:h}/config.local.zsh"
+typeset -g config_local="${0:A:h}/config.local.zsh"
 if [[ -f "$config_local" ]]; then
   source "$config_local"
 fi

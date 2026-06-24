@@ -295,7 +295,7 @@ ui_confirm() {
   while (( attempts < max_attempts )); do
     printf "${COLOR_CYAN}${prompt} ${COLOR_DIM}${hint}${COLOR_RESET}: "
     local ans
-    read ans
+    read -r ans
 
     # 빈 입력: 기본값 적용
     if [[ -z "$ans" ]]; then

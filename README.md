@@ -477,10 +477,10 @@ cp lib/config.local.zsh.example lib/config.local.zsh
 - `tmux_shortcuts` - v1.0.0
 - `ai_tools` - v1.0.0
 - `claude_hooks_skills` (installer) - v1.0.0
-- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.1.0
+- `lib/config.zsh` (DEV_TOOLKIT_VERSION) - v2.1.1
 
 ---
 
 **개발환경**: macOS + Zsh + Oh My Zsh + Powerlevel10k
 **작성자**: TechJuiceLab
-**최종 업데이트**: 2026-03-24
+**최종 업데이트**: 2026-06-24

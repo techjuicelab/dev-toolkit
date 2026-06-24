@@ -44,7 +44,7 @@ function tmuxk {
   local target confirm
   target=$(tmux ls 2>/dev/null | fzf --prompt="Kill session > " --preview="tmux list-windows -t {1}" --delimiter=: --with-nth=1) || return 1
   target="${target%%:*}"
-  read "confirm?정말 '$target' 세션을 종료할까요? [y/N]: "
+  read -r "confirm?정말 '$target' 세션을 종료할까요? [y/N]: "
   [[ "$confirm" =~ ^[Yy]$ ]] || return 1
   tmux kill-session -t "$target"
   echo "'$target' 세션 종료됨"
@@ -71,7 +71,7 @@ function tmuxr {
   fi
   target=$(tmux ls 2>/dev/null | fzf --prompt="Rename session > " --preview="tmux list-windows -t {1}" --delimiter=: --with-nth=1) || return 1
   target="${target%%:*}"
-  read "new_name?'$target'의 새 이름: "
+  read -r "new_name?'$target'의 새 이름: "
   [ -z "$new_name" ] && { echo "취소됨"; return 1; }
   tmux rename-session -t "$target" "$new_name"
   echo "'$target' → '$new_name'"
