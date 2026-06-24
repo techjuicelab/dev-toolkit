@@ -1,6 +1,6 @@
 {
   "name": "secret-guard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Blocks high-confidence plaintext secrets at write/commit/push time (PreToolUse hook), and ships a 1Password (op://) workflow skill so secrets are referenced correctly instead of hardcoded.",
   "author": {
     "name": "TechJuiceLab",

@@ -7,6 +7,10 @@ description: The 1Password (op CLI) workflow for handling secrets, API keys, tok
 
 This project manages secrets with the **1Password CLI (`op`)**. The rule is simple: **secret *references* live in files; secret *values* never do.** Real values stay in 1Password and are injected at runtime.
 
+## Default vault
+
+**All 1Password-CLI secrets live in a single vault: `AI Automation`.** Always reference as `op://AI Automation/<item>/<field>` unless the user explicitly names another vault. (List items with `op item list --vault "AI Automation"`.)
+
 ## Core rule
 
 - ✅ Files (`.env`, configs, CI) contain `op://vault/item/field` references.
@@ -21,8 +25,8 @@ The companion **secret-guard** hook enforces this by blocking writes/commands th
 ```
 op://<vault>/<item>/<field>
 # examples
-op://Dev/OpenAI/api_key
-op://Dev/Postgres/connection_string
+op://AI Automation/OpenAI/api_key
+op://AI Automation/Postgres/connection_string
 op://AI Automation/Notion/api_token
 ```
 
@@ -32,9 +36,9 @@ Write `.env` (or `.env.example`, committed) with **references**, not values:
 
 ```dotenv
 # .env  — references only; resolved at runtime by `op run`
-OPENAI_API_KEY=op://Dev/OpenAI/api_key
-DATABASE_URL=op://Dev/Postgres/connection_string
-GITHUB_TOKEN=op://Dev/GitHub/token
+OPENAI_API_KEY=op://AI Automation/OpenAI/api_key
+DATABASE_URL=op://AI Automation/Postgres/connection_string
+GITHUB_TOKEN=op://AI Automation/GitHub/token
 ```
 
 Ensure `.env` is gitignored when it could ever hold real values:
@@ -67,8 +71,8 @@ rm -f .env
 ## Reading a single secret
 
 ```bash
-op read "op://Dev/OpenAI/api_key"                 # prints the value (use sparingly)
-export STRIPE_KEY="$(op read 'op://Dev/Stripe/secret')"   # ephemeral, not written to disk
+op read "op://AI Automation/OpenAI/api_key"                 # prints the value (use sparingly)
+export STRIPE_KEY="$(op read 'op://AI Automation/Stripe/secret')"   # ephemeral, not written to disk
 ```
 
 ## When the user gives you a real secret

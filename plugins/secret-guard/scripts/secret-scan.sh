@@ -48,7 +48,7 @@ cat >&2 <<EOF
 🔒 secret-guard blocked this action — it contains a high-confidence plaintext secret ("$REDACTED").
 
 Never write secrets to disk or pass them on the command line. Instead:
-  • Store the secret in 1Password and reference it as:  op://<vault>/<item>/<field>
+  • Store the secret in 1Password (vault: AI Automation) and reference it as:  op://AI Automation/<item>/<field>
   • Run the app with secrets injected at runtime:        op run --env-file=.env -- <command>
   • Materialize one-offs from a template:                op inject -i .env.tpl -o .env
   • Keep real .env files gitignored.
